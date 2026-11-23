@@ -173,7 +173,7 @@ dialog input:focus{border-color:var(--accent)}
 .msg{font-size:13px;min-height:1.4em;color:var(--crit);margin:0 0 6px}
 .msg.ok{color:var(--good-ink)}
 .tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-table.in td input{width:120px;max-width:100%;background:var(--surface-2);border:1px solid transparent;border-radius:8px;padding:6px 8px;text-align:right}
+table.in td input{width:92px;max-width:100%;background:var(--surface-2);border:1px solid transparent;border-radius:8px;padding:6px 8px;text-align:right}
 table.in td input:focus{border-color:var(--accent);background:var(--surface)}
 table.in td{font-weight:400}
 table.in tr.sec td{background:var(--surface-2);font-weight:600;font-size:12.5px;color:var(--ink-2);text-align:left}
@@ -243,7 +243,7 @@ const D=window.KPI_DATA, YEARS=['2024','2025','2026'];
 const AREA=Object.fromEntries(D.areas);
 const G={'○':['g-o','즉시 산출 가능'],'△':['g-t','조건부 산출 가능'],'×':['g-x','산출 불가, 재설계 필요']};
 const JL=['정책적 필요성','행정 효율성','시스템 구현 가능성'];
-let st={secure:null,onlyEmpty:true,view:'list',area:'ALL',year:'2025',dept:'',grades:[],pub:false,q:'',open:null,user:{}};
+let st={secure:null,onlyEmpty:true,inDept:'',view:'list',area:'ALL',year:'2025',dept:'',grades:[],pub:false,q:'',open:null,user:{}};
 try{const s=JSON.parse(localStorage.getItem('ghu-kpi-v1')||'null'); if(s&&s.user) st.user=s.user;}catch(e){}
 const h=location.hash.replace('#area-','').toUpperCase(); if(AREA[h]) st.area=h;
 const save=()=>{try{localStorage.setItem('ghu-kpi-v1',JSON.stringify({user:st.user}));}catch(e){}};
@@ -498,7 +498,7 @@ async function keyOf(pw,salt){ const km=await crypto.subtle.importKey('raw',enc.
 async function encryptData(pw,obj){ const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12)); const k=await keyOf(pw,salt);
   const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,enc.encode(JSON.stringify(obj)))); return {v:1,kdf:'PBKDF2-SHA256-600000',salt:toB(salt),iv:toB(iv),ct:toB(ct)}; }
 async function decryptData(pw,f){ const k=await keyOf(pw,fromB(f.salt)); const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:fromB(f.iv)},k,fromB(f.ct)); return JSON.parse(dec.decode(pt)); }
-function saveFile(name,text){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'application/json'})); a.download=name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
+function saveFile(name,text){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:/\.csv$/.test(name)?'text/csv;charset=utf-8':'application/json'})); a.download=name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
 const cleanUser=()=>{ const o={}; for(const c in st.user){ if(!IND[c]) continue; const e={}; for(const k in st.user[c]){ const v=st.user[c][k]; if(k==='w'){ if(typeof v==='number') e.w=v; } else if(v&&Object.keys(v).length) e[k]=v; } if(Object.keys(e).length) o[c]=e; } return o; };
 const countUser=o=>{ let n=0; for(const c in o) for(const k in o[c]) n+=k==='w'?1:Object.keys(o[c][k]).length; return n; };
 function validUser(o){ if(!o||typeof o!=='object'||Array.isArray(o)) return null; const r={}; for(const c in o){ if(!IND[c]||typeof o[c]!=='object') continue; const e={}; for(const k in o[c]){ const v=o[c][k];
@@ -514,26 +514,60 @@ $('f-enc').addEventListener('submit',async e=>{ e.preventDefault(); const m=$('m
   if(a.length<12){ m.textContent='비밀번호는 12자 이상이어야 합니다.'; return; } if(a!==b){ m.textContent='두 비밀번호가 다릅니다.'; return; }
   const o=cleanUser(); if(!countUser(o)){ m.textContent='입력된 값이 없습니다. 먼저 실적이나 목표를 입력하세요.'; return; }
   try{ const f=await encryptData(a,o); saveFile('secure.json',JSON.stringify(f)); $('pw-enc1').value=''; $('pw-enc2').value=''; m.className='msg ok'; m.textContent=`값 ${countUser(o)}개를 암호화해 secure.json으로 저장했습니다.`; }catch(x){ m.textContent='암호화하지 못했습니다. 최신 브라우저에서 https 주소로 열어 다시 시도하세요.'; } });
-function renderInput(){ const y=st.year, box=$('v-input'); const all=scope(); const items=all.filter(i=>!st.onlyEmpty||!(i.p&&i.p.v[y]!==undefined&&i.p.match!=='참고'));
-  const o=cleanUser(), n=countUser(o);
-  const fileIn=el('input',{type:'file',accept:'application/json,.json',id:'file-in',style:'display:none',onchange:async e=>{ const f=e.target.files[0]; if(!f) return; let ok=null; try{ ok=validUser(JSON.parse(await f.text())); }catch(x){} const m=$('msg-in');
-      if(!ok||!Object.keys(ok).length){ m.className='msg'; m.textContent='읽을 수 있는 입력값이 없습니다. "입력값 파일로 저장"으로 만든 JSON 파일을 선택하세요.'; return; }
-      for(const c in ok){ st.user[c]=Object.assign({},st.user[c]||{}); for(const k in ok[c]) st.user[c][k]=k==='w'?ok[c][k]:Object.assign({},st.user[c][k]||{},ok[c][k]); } save(); render(); const m2=$('msg-in'); m2.className='msg ok'; m2.textContent=`파일에서 지표 ${Object.keys(ok).length}개의 값을 불러왔습니다.`; }});
+const DEPTS=[...new Set(D.ind.map(i=>i.cd))].sort();
+const isOpen=i=>!(i.p&&i.p.match!=='참고');
+const filled=(i)=>YEARS.some(y=>{const e=(st.user[i.c]||{})[y]; return e&&e.a!==undefined;});
+const csvCell=v=>{v=v===undefined||v===null?'':String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+const fTxt=i=>i.f.num?`(${i.f.num}) ÷ (${i.f.den})${i.f.mult?' '+i.f.mult:''}`:(i.f.text||'');
+function makeCsv(items){ const H=['지표코드','지표명','주 관리부서','단위','산출식','데이터 수집 기준']; YEARS.forEach(y=>H.push(y+' 실적',y+' 목표')); H.push('참고: 대학알리미 공시값');
+  const L=[H.map(csvCell).join(',')]; items.forEach(i=>{ const r=[i.c,i.n,i.cd,unitOf(i),fTxt(i),i.dt]; YEARS.forEach(y=>{const e=(st.user[i.c]||{})[y]||{}; r.push(e.a===undefined?'':e.a,e.t===undefined?'':e.t);});
+    r.push(i.p?Object.keys(i.p.v).sort().map(y=>`${y}년 ${fmt(i.p.v[y],i.p.unit)}`).join(' / ')+` (${i.p.match})`:''); L.push(r.map(csvCell).join(',')); }); return '﻿'+L.join('\r\n'); }
+function parseCsv(t){ const rows=[]; let r=[],c='',q=false; for(let k=0;k<t.length;k++){ const ch=t[k]; if(q){ if(ch==='"'){ if(t[k+1]==='"'){c+='"';k++;} else q=false; } else c+=ch; }
+    else if(ch==='"') q=true; else if(ch===','){r.push(c);c='';} else if(ch==='\n'){r.push(c);rows.push(r);r=[];c='';} else if(ch!=='\r') c+=ch; } if(c!==''||r.length){r.push(c);rows.push(r);} return rows; }
+const num=v=>{ v=String(v===undefined?'':v).replace(/[,\s%원명건점]/g,''); if(v==='') return null; const n=parseFloat(v); return isFinite(n)?n:NaN; };
+async function readText(f){ const b=await f.arrayBuffer(); try{ return new TextDecoder('utf-8',{fatal:true}).decode(b); }catch(e){ return new TextDecoder('euc-kr').decode(b); } }
+function importCsv(t){ const rows=parseCsv(t.replace(/^﻿/,'')); if(!rows.length) return null; const H=rows[0].map(h=>h.trim()); const ci=H.indexOf('지표코드'); if(ci<0) return null;
+  const cols=[]; YEARS.forEach(y=>{ const a=H.indexOf(y+' 실적'), b=H.indexOf(y+' 목표'); if(a>=0) cols.push([a,y,'a']); if(b>=0) cols.push([b,y,'t']); });
+  let n=0,bad=0; const hit=new Set(); rows.slice(1).forEach(r=>{ const c=(r[ci]||'').trim(); if(!IND[c]) return; cols.forEach(([k,y,q])=>{ const v=num(r[k]); if(v===null) return; if(isNaN(v)){bad++;return;} st.user[c]=st.user[c]||{}; st.user[c][y]=st.user[c][y]||{}; st.user[c][y][q]=v; n++; hit.add(c); }); });
+  save(); return {n,bad,k:hit.size}; }
+function renderInput(){ const box=$('v-input'); const base=scope().filter(i=>!st.inDept||i.cd===st.inDept); const items=base.filter(i=>!st.onlyEmpty||isOpen(i)); const n=countUser(cleanUser());
+  const say=(t,ok)=>{const m=$('msg-in'); m.className='msg'+(ok?' ok':''); m.textContent=t;};
+  const jsonIn=el('input',{type:'file',accept:'application/json,.json',style:'display:none',onchange:async e=>{ const f=e.target.files[0]; if(!f) return; let ok=null; try{ ok=validUser(JSON.parse(await f.text())); }catch(x){}
+      if(!ok||!Object.keys(ok).length){ say('읽을 수 있는 입력값이 없습니다. "전체 입력값 백업"으로 만든 JSON 파일을 선택하세요.'); return; }
+      for(const c in ok){ st.user[c]=Object.assign({},st.user[c]||{}); for(const k in ok[c]) st.user[c][k]=k==='w'?ok[c][k]:Object.assign({},st.user[c][k]||{},ok[c][k]); } save(); render(); say(`백업 파일에서 지표 ${Object.keys(ok).length}개의 값을 불러왔습니다.`,true); }});
+  const csvIn=el('input',{type:'file',accept:'.csv,text/csv',multiple:'',style:'display:none',onchange:async e=>{ let tn=0,tk=0,tb=0,fail=0; for(const f of e.target.files){ let r=null; try{ r=importCsv(await readText(f)); }catch(x){} if(!r){fail++;continue;} tn+=r.n; tk+=r.k; tb+=r.bad; }
+      render(); say(tn?`양식 ${e.target.files.length-fail}개에서 지표 ${tk}개, 값 ${tn}개를 반영했습니다.`+(tb?` 숫자로 읽지 못한 칸 ${tb}개는 건너뛰었습니다.`:'')+(fail?` 형식이 다른 파일 ${fail}개는 읽지 못했습니다.`:''):'반영할 값이 없습니다. 이 화면에서 내려받은 양식(CSV)에 숫자를 채워 올려 주세요.',!!tn); }});
+  const dl=(its,name)=>{ if(!its.length){ say('내려받을 지표가 없습니다.'); return; } saveFile(name,makeCsv(its)); say(`${name} 파일을 저장했습니다. 엑셀에서 열어 실적과 목표 칸만 채운 뒤 CSV로 저장해 회신받으면 됩니다.`,true); };
+  const prog=el('div',{class:'tools',role:'group','aria-label':'부서 선택'},el('button',{class:'chip','aria-pressed':String(!st.inDept),text:`전체 부서`,onclick:()=>{st.inDept='';renderInput();}}),
+    ...DEPTS.filter(d=>scope().some(i=>i.cd===d)).map(d=>{ const its=scope().filter(i=>i.cd===d&&isOpen(i)); const f=its.filter(filled).length; return el('button',{class:'chip','aria-pressed':String(st.inDept===d),title:`입력이 필요한 지표 ${its.length}개 중 ${f}개 입력`,text:`${d} ${f}/${its.length}`,onclick:()=>{st.inDept=d;renderInput();}}); }));
+  const dn=st.inDept||'전체 부서', need=base.filter(isOpen);
+  const req=`[성과지표 실적 제출 요청]\n${dn} 담당 지표 ${need.length}개의 ${YEARS[0]}~${YEARS[YEARS.length-1]}년 실적과 목표를 첨부한 양식에 입력해 회신 부탁드립니다.\n· 양식의 "실적", "목표" 칸에 숫자만 입력해 주세요. 다른 칸은 수정하지 않습니다.\n· 산출식과 데이터 수집 기준은 양식의 해당 열을 따라 주세요.\n· 자료가 없는 칸은 비워 두시면 됩니다.\n· 엑셀에서 작성하신 뒤 CSV 형식으로 저장해 보내 주세요.`;
   const head=el('div',{class:'panel',id:'input-head'},el('h2',{text:'데이터 입력'}),
-    el('p',{class:'cap',text:`${y}년 실적과 목표를 지표별로 입력합니다. 대학알리미 공시값이 있는 칸은 회색 글씨로 보이며, 값을 넣으면 공시값 대신 쓰입니다. 입력값은 이 브라우저에 저장됩니다.`}),el('p',{class:'cap',id:'in-count',text:`현재 입력된 값 ${n}개`}),
+    el('p',{class:'cap',text:`${YEARS[0]}~${YEARS[YEARS.length-1]}년 실적과 목표를 한 표에서 입력합니다. 부서를 고르면 그 부서 지표만 보이고, 부서 이름 옆 숫자는 입력이 필요한 지표 중 실적이 들어간 개수입니다.`}),prog,
+    el('div',{class:'lbl',style:'font-size:12px;color:var(--muted);font-weight:600;margin:14px 0 6px',text:`부서에 요청하기 (${dn})`}),
     el('div',{class:'tools'},
-      el('button',{class:'chip','aria-pressed':String(st.onlyEmpty),text:'공시값 없는 지표만',onclick:()=>{st.onlyEmpty=!st.onlyEmpty;renderInput();}}),
-      el('button',{class:'btn',text:'입력값 파일로 저장',onclick:()=>{ const m=$('msg-in'); if(!n){ m.className='msg'; m.textContent='입력된 값이 없습니다.'; return; } saveFile('ghu-kpi-input.json',JSON.stringify(cleanUser(),null,1)); m.className='msg ok'; m.textContent='ghu-kpi-input.json으로 저장했습니다. 이 파일은 암호화되지 않았으니 저장소에 올리지 마세요.'; }}),
-      el('button',{class:'btn',text:'파일 불러오기',onclick:()=>fileIn.click()}),fileIn,
-      el('button',{class:'btn pri',text:'암호화 파일 만들기',onclick:()=>{ $('msg-enc').textContent=''; $('dlg-enc').showModal(); }})),
-    el('p',{class:'msg',id:'msg-in',style:'margin-top:10px'}),
+      el('button',{class:'btn pri',text:'요청 양식 내려받기 (CSV)',onclick:()=>dl(need,`성과지표_입력양식_${dn.replace(/\s+/g,'')}.csv`)}),
+      el('button',{class:'btn',text:'요청 문구 복사',onclick:async()=>{ try{ await navigator.clipboard.writeText(req); say('요청 문구를 복사했습니다. 메신저나 메일에 붙여 넣고 양식을 첨부하세요.',true); }catch(x){ say('복사하지 못했습니다. 아래 문구를 직접 선택해 복사하세요.'); } }}),
+      el('button',{class:'btn',text:'회신받은 양식 올리기',onclick:()=>csvIn.click()}),csvIn),
+    el('pre',{id:'req-text',style:'white-space:pre-wrap;background:var(--surface-2);border-radius:12px;padding:12px 14px;font:inherit;font-size:13px;margin:10px 0 0',text:req}),
+    el('div',{class:'lbl',style:'font-size:12px;color:var(--muted);font-weight:600;margin:14px 0 6px',text:'보관과 공유'}),
+    el('div',{class:'tools'},
+      el('button',{class:'chip','aria-pressed':String(st.onlyEmpty),text:'공시값 없는 지표만 보기',onclick:()=>{st.onlyEmpty=!st.onlyEmpty;renderInput();}}),
+      el('button',{class:'btn',text:'전체 입력값 백업',onclick:()=>{ const c=countUser(cleanUser()); if(!c){ say('입력된 값이 없습니다.'); return; } saveFile('ghu-kpi-input.json',JSON.stringify(cleanUser(),null,1)); say('ghu-kpi-input.json으로 저장했습니다. 암호화되지 않은 파일이니 저장소에 올리지 마세요.',true); }}),
+      el('button',{class:'btn',text:'백업 불러오기',onclick:()=>jsonIn.click()}),jsonIn,
+      el('button',{class:'btn',text:'정밀 버전용 암호화 파일 만들기',onclick:()=>{ $('msg-enc').textContent=''; $('dlg-enc').showModal(); }})),
+    el('p',{class:'cap',id:'in-count',style:'margin:10px 0 0',text:`현재 입력된 값 ${n}개`}),el('p',{class:'msg',id:'msg-in'}),
     st.secure?el('p',{class:'note',text:'지금은 정밀 버전을 보는 중입니다. 화면의 수치에는 암호화 파일의 값이 우선 적용되고, 여기서 입력하는 값은 이 브라우저에만 저장됩니다.'}):null);
   const rows=[]; let sub='';
-  items.forEach(i=>{ if(i.s!==sub){ sub=i.s; rows.push(el('tr',{class:'sec'},el('td',{colspan:'5',text:`${i.s} ${D.sub[i.s]}`}))); }
-    const u=unitOf(i), loc=(st.user[i.c]||{})[y]||{}, a=i.p&&i.p.v[y]!==undefined?fmt(i.p.v[y],u)+' ('+i.p.match+')':'', py=i.p&&i.p.match!=='참고'&&i.p.v[String(+y-1)]!==undefined?fmt(i.p.v[String(+y-1)],u)+' (전년도)':'';
-    const mk=(k,ph,lab)=>el('input',{type:'number',step:'any',inputmode:'decimal',id:`in-${k}-${y}-${i.c}`,'aria-label':`${i.c} ${i.n} ${lab}`,value:loc[k]===undefined?'':loc[k],placeholder:ph,onchange:e=>{ setU(i.c,y,k,e.target.value===''?'':parseFloat(e.target.value)); renderAreas(); renderTiles(); $('in-count').textContent=`현재 입력된 값 ${countUser(cleanUser())}개`; }});
-    rows.push(el('tr',null,el('td',null,el('b',{text:i.c+' '}),i.n),el('td',{text:i.cd,style:'text-align:left'}),el('td',{text:u||'-'}),el('td',null,mk('a',a,'실적')),el('td',null,mk('t',py,'목표')))); });
-  const tbl=el('div',{class:'panel'},items.length?el('div',{class:'tw'},el('table',{class:'t in'},el('thead',null,el('tr',null,el('th',{text:`지표 (${items.length}개)`}),el('th',{text:'주 관리부서',style:'text-align:left'}),el('th',{text:'단위'}),el('th',{text:y+'년 실적'}),el('th',{text:y+'년 목표'}))),el('tbody',null,...rows))):el('p',{class:'cap',text:'표시할 지표가 없습니다.'}));
+  items.forEach(i=>{ if(i.s!==sub){ sub=i.s; rows.push(el('tr',{class:'sec'},el('td',{colspan:String(2+YEARS.length*2),text:`${i.s} ${D.sub[i.s]}`}))); }
+    const u=unitOf(i); const tds=[];
+    YEARS.forEach(y=>{ const loc=(st.user[i.c]||{})[y]||{}; const pa=i.p&&i.p.v[y]!==undefined?fmt(i.p.v[y],u):'', pt=i.p&&i.p.match!=='참고'&&i.p.v[String(+y-1)]!==undefined?fmt(i.p.v[String(+y-1)],u):'';
+      [['a',pa,'실적'],['t',pt,'목표']].forEach(([k,ph,lab])=>tds.push(el('td',null,el('input',{type:'number',step:'any',inputmode:'decimal',id:`in-${k}-${y}-${i.c}`,'aria-label':`${i.c} ${i.n} ${y}년 ${lab}`,value:loc[k]===undefined?'':loc[k],placeholder:ph,onchange:e=>{ setU(i.c,y,k,e.target.value===''?'':parseFloat(e.target.value)); renderAreas(); renderTiles(); $('in-count').textContent=`현재 입력된 값 ${countUser(cleanUser())}개`; }})))); });
+    rows.push(el('tr',null,el('td',null,el('b',{text:i.c+' '}),i.n,el('div',{class:'small',text:i.cd})),el('td',{text:u||'-'}),...tds)); });
+  const tbl=el('div',{class:'panel'},items.length?el('div',{class:'tw'},el('table',{class:'t in'},el('thead',null,
+      el('tr',null,el('th',{rowspan:'2',text:`지표 (${items.length}개)`}),el('th',{rowspan:'2',text:'단위'}),...YEARS.map(y=>el('th',{colspan:'2',style:'text-align:center',text:y+'년'}))),
+      el('tr',null,...YEARS.flatMap(()=>[el('th',{text:'실적'}),el('th',{text:'목표'})]))),el('tbody',null,...rows))):el('p',{class:'cap',text:'표시할 지표가 없습니다.'}),
+    el('p',{class:'small',style:'margin:10px 0 0',text:'회색 글씨는 대학알리미 공시값(실적 칸)과 전년도 공시값(목표 칸)입니다. 값을 넣으면 그 값이 대신 쓰입니다.'}));
   box.replaceChildren(head,tbl); }
 function render(){ renderLock(); renderYears(); renderAreas(); renderTiles(); renderViews(); renderFilters(); renderList(); renderCompare(); renderAnalysis(); renderSolution(); renderInput(); }
 $('f-dept').addEventListener('change',e=>{st.dept=e.target.value;renderList();});
