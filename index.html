@@ -4,14 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>광주보건대 성과지표 대시보드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 /* 배치: 반투명 상단 바(연도 전환) → 큰 제목 → 영역 카드 → 요약 → 필터 → KPI 묶음별 지표 행, 행을 누르면 아래로 상세가 펼쳐짐 */
 :root{
   --bg:#f5f5f7; --surface:#ffffff; --surface-2:#f5f5f7; --ink:#1d1d1f; --ink-2:#6e6e73; --muted:#86868b;
   --line:#e8e8ed; --accent:#0071e3; --accent-soft:#eaf3fe; --track:#e8e8ed; --bar:rgba(245,245,247,.78);
   --good:#34c759; --warn:#ff9f0a; --crit:#ff3b30; --good-ink:#1d7a34; --s1:#2a78d6; --s2:#eb6834; --y1:#86b6ef; --y2:#2a78d6; --y3:#104281; --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);
-  --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",sans-serif;
-  --body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",sans-serif;
+  --display:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+  --body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -198,6 +199,15 @@ table.in tr.sec td{background:var(--surface-2);font-weight:600;font-size:12.5px;
 .opt[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .confl input{width:110px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .alert{background:color-mix(in srgb,var(--crit) 12%,var(--surface));color:var(--ink);border-radius:14px;padding:12px 16px;font-size:14px;font-weight:500}
+
+h1{font-weight:800}
+.kpi>h2,.panel h2,.grp,dialog h2,.acard h3,.sol h3{font-weight:800}
+.tile .v,.area .lt{font-weight:800}
+.brand{font-weight:800}
+.row .n{font-weight:600}
+.detail h3,.sol .lbl{font-weight:700}
+table.t th{font-weight:600}
+body{font-weight:400;letter-spacing:-.005em}
 @media (max-width:860px){
   header.top{padding:32px 0 4px}
   .row{grid-template-columns:1fr auto;grid-template-areas:"c g" "n n" "dp dp" "v v" "m m";gap:3px 8px;padding:14px 18px}
