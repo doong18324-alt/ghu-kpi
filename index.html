@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>광주보건대 성과지표 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* 배치: 상단 요약(영역 6칸) → 필터 한 줄 → 핵심 KPI/Sub KPI 묶음의 지표 행, 행을 누르면 바로 아래에 정의서와 공시 수치가 펼쳐짐 */
+:root{
+  --bg:#f3f4f0; --surface:#fcfcfb; --surface-2:#eef0ea; --ink:#141a1d; --ink-2:#4d575b; --muted:#7b8386;
+  --line:#dcdfd7; --accent:#1c5cab; --accent-soft:#e3edf9; --track:#e4e6df;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b; --good-ink:#006300;
+  --display:"Noto Serif KR","IBM Plex Sans KR",serif; --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101314; --surface:#1a1d1e; --surface-2:#23282a; --ink:#eef0ec; --ink-2:#c0c6c2; --muted:#8b9390;
+    --line:#2f3537; --accent:#6da7ec; --accent-soft:#1b2c42; --track:#2c3234; --good-ink:#3fc43f; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101314; --surface:#1a1d1e; --surface-2:#23282a; --ink:#eef0ec; --ink-2:#c0c6c2; --muted:#8b9390;
+  --line:#2f3537; --accent:#6da7ec; --accent-soft:#1b2c42; --track:#2c3234; --good-ink:#3fc43f; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding:20px 16px 56px;display:flex;flex-direction:column;gap:18px}
+header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+h1{font-family:var(--display);font-size:24px;line-height:1.25;margin:0;text-wrap:balance}
+.sub{color:var(--ink-2);margin:4px 0 0;max-width:68ch}
+.years{display:flex;gap:4px;align-items:center}
+.years span{color:var(--ink-2);margin-right:6px;font-size:13px}
+.seg{border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:6px}
+.seg[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.areas{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.area{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:8px}
+.area[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.area .nm{display:flex;align-items:baseline;gap:8px}
+.area .lt{font-family:var(--display);font-size:22px;color:var(--accent);line-height:1}
+.area .ti{font-weight:600}
+.area .meta{color:var(--ink-2);font-size:12.5px;display:flex;justify-content:space-between;gap:8px}
+.gbar{display:flex;gap:2px;height:8px;border-radius:4px;overflow:hidden;background:var(--track)}
+.gbar i{display:block;height:100%}
+.g-o{background:var(--good)} .g-t{background:var(--warn)} .g-x{background:var(--crit)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.tile .k{color:var(--ink-2);font-size:12.5px}
+.tile .v{font-size:26px;font-weight:700;line-height:1.2;margin-top:2px}
+.tile .v small{font-size:13px;font-weight:500;color:var(--ink-2);margin-left:4px}
+.tile .d{color:var(--ink-2);font-size:12.5px;margin-top:4px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:12.5px;color:var(--ink-2)}
+.filters{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.filters label{font-size:12.5px;color:var(--ink-2);display:flex;align-items:center;gap:6px}
+.filters select,.filters input[type="search"]{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px;min-width:0}
+.filters input[type="search"]{width:180px}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 10px;font-size:13px}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
+.count{margin-left:auto;color:var(--ink-2);font-size:12.5px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.kpi>h2{margin:0;padding:12px 14px;font-size:16px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line)}
+.kpi>h2 .code{color:var(--accent);font-weight:700;margin-right:8px}
+.score{font-size:13px;font-weight:500;color:var(--ink-2)}
+.score b{color:var(--ink);font-size:15px}
+.subh{padding:8px 14px;background:var(--surface-2);font-weight:600;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:space-between;border-bottom:1px solid var(--line)}
+.row{display:grid;grid-template-columns:74px minmax(150px,1.6fr) minmax(90px,.8fr) 54px minmax(150px,1.1fr) minmax(120px,.9fr);gap:10px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 14px}
+.row:hover{background:var(--surface-2)}
+.row[aria-expanded="true"]{background:var(--accent-soft)}
+.row .c{font-weight:600;color:var(--ink-2)}
+.row .n{font-weight:500}
+.row .dp{color:var(--ink-2);font-size:12.5px}
+.pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:1px 8px;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--surface);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.val{display:flex;align-items:center;gap:8px;justify-content:flex-end;text-align:right}
+.val .num{font-weight:600}
+.val .u{color:var(--ink-2);font-size:12px;margin-left:2px}
+.val .none{color:var(--muted);font-size:12.5px}
+.meter{display:flex;align-items:center;gap:8px}
+.meter .bar{flex:1;height:8px;background:var(--track);border-radius:4px;overflow:hidden;min-width:40px}
+.meter .bar i{display:block;height:100%;background:var(--accent);border-radius:0 4px 4px 0}
+.meter .pc{width:48px;text-align:right;font-weight:600;font-size:13px}
+.meter .none{color:var(--muted);font-size:12.5px}
+.tag{font-size:11.5px;border-radius:4px;padding:0 5px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+.tag.pub{border-color:var(--accent);color:var(--accent)}
+.detail{border-bottom:1px solid var(--line);padding:14px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px 24px;background:var(--surface)}
+.detail h3{margin:0 0 6px;font-size:13px;color:var(--ink-2);font-weight:600}
+.detail p{margin:0 0 10px;max-width:68ch}
+.detail section{min-width:0}
+.formula{background:var(--surface-2);border-radius:8px;padding:10px 12px;margin-bottom:10px;overflow-x:auto}
+.formula .lb{font-weight:600;margin-bottom:6px}
+.frac{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.frac .fr{display:inline-flex;flex-direction:column;text-align:center}
+.frac .fr span{padding:2px 8px}
+.frac .fr span+span{border-top:1.5px solid var(--ink)}
+.notes{margin:0 0 10px;padding-left:18px;color:var(--ink-2)}
+table.t{border-collapse:collapse;width:100%;font-size:13px}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:right}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t th{color:var(--ink-2);font-weight:600}
+.tw{overflow-x:auto}
+.inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:8px 0 10px}
+.inputs label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--ink-2)}
+.inputs input{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%}
+.warnbox{border-left:3px solid var(--warn);background:var(--surface-2);padding:6px 10px;border-radius:0 6px 6px 0;margin-bottom:10px;font-size:13px}
+.judge{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 10px;font-size:13px}
+.judge dt{color:var(--ink-2)} .judge dd{margin:0;font-weight:500}
+.small{color:var(--ink-2);font-size:12.5px}
+.empty{padding:28px 14px;text-align:center;color:var(--ink-2);background:var(--surface);border:1px dashed var(--line);border-radius:10px}
+footer{color:var(--ink-2);font-size:12.5px;max-width:80ch}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline}
+@media (max-width:860px){
+  .row{grid-template-columns:64px 1fr 54px;grid-template-areas:"c n g" "c dp dp" "v v v" "m m m";gap:4px 8px}
+  .row .c{grid-area:c;align-self:start} .row .n{grid-area:n} .row .gr{grid-area:g;justify-self:end} .row .dp{grid-area:dp}
+  .row .val{grid-area:v;justify-content:flex-start} .row .meter{grid-area:m}
+  .detail{grid-template-columns:minmax(0,1fr)}
+  .count{margin-left:0;width:100%}
+}
+@media (prefers-reduced-motion:no-preference){.meter .bar i{transition:width .25s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>광주보건대 성과지표 대시보드</h1>
+      <p class="sub">SMILEG 6개 영역 137개 세부지표의 정의서와 점검표를 한 화면에서 살펴보고, 대학알리미 공시 수치가 있는 지표는 3개 연도 실적을 함께 봅니다.</p>
+    </div>
+    <div class="years" role="group" aria-label="공시연도"><span>공시연도</span><span id="years"></span></div>
+  </header>
+  <div class="areas" id="areas"></div>
+  <div class="tiles" id="tiles"></div>
+  <div class="filters">
+    <label for="f-dept">주 관리부서 <select id="f-dept"></select></label>
+    <span role="group" aria-label="진단등급" id="f-grade" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+    <button class="chip" id="f-pub" aria-pressed="false">공시 수치 있는 지표만</button>
+    <label for="f-q">검색 <input type="search" id="f-q" placeholder="지표명, 코드"></label>
+    <span class="count" id="count"></span>
+  </div>
+  <div id="list" style="display:flex;flex-direction:column;gap:14px"></div>
+  <footer>
+    <p><b>자료</b> 지표 구조, 산출식, 주 관리부서는 영역별 세부지표 정의서 6종에서, 검토의견과 진단등급은 「대학 성과지표체계 점검표」(2026-10-21)에서 가져왔습니다. 실적 수치는 대학알리미 광주보건대학교[본교] 공시(2024, 2025, 2026년 공시, 2026-11-23 조회)입니다.</p>
+    <p><b>달성률</b> 목표를 직접 입력하지 않은 지표는 전년도 공시값을 임시 목표로 씁니다. 낮을수록 좋은 지표는 목표 ÷ 실적으로 계산하고, 합산할 때 지표별 달성률은 130%까지만 반영합니다. Sub KPI 점수는 가중 평균이며 가중치는 S1만 정의서 예시값(0.5, 0.3, 0.2 등)이고 나머지는 균등입니다. 입력한 실적, 목표, 가중치는 이 브라우저에만 저장됩니다. <button class="linkbtn" id="reset">입력값 모두 지우기</button></p>
+  </footer>
+</div>
+<script src="data.js"></script>
+<script>
+(function(){
+const D=window.KPI_DATA, YEARS=['2024','2025','2026'];
+const AREA=Object.fromEntries(D.areas);
+const G={'○':['g-o','즉시 산출 가능'],'△':['g-t','조건부 산출 가능'],'×':['g-x','산출 불가, 재설계 필요']};
+const JL=['정책적 필요성','행정 효율성','시스템 구현 가능성'];
+let st={area:'ALL',year:'2025',dept:'',grades:[],pub:false,q:'',open:null,user:{}};
+try{const s=JSON.parse(localStorage.getItem('ghu-kpi-v1')||'null'); if(s&&s.user) st.user=s.user;}catch(e){}
+const h=location.hash.replace('#area-','').toUpperCase(); if(AREA[h]) st.area=h;
+const save=()=>{try{localStorage.setItem('ghu-kpi-v1',JSON.stringify({user:st.user}));}catch(e){}};
+const $=id=>document.getElementById(id);
+const el=(t,a,...kids)=>{const e=document.createElement(t); if(a) for(const k in a){ if(k==='class') e.className=a[k]; else if(k==='text') e.textContent=a[k]; else if(k.startsWith('on')) e.addEventListener(k.slice(2),a[k]); else if(a[k]!==null&&a[k]!==undefined) e.setAttribute(k,a[k]); } kids.flat().forEach(k=>{ if(k!==null&&k!==undefined&&k!==false) e.append(k); }); return e;};
+const nf=(v,d)=>v.toLocaleString('ko-KR',{maximumFractionDigits:d,minimumFractionDigits:0});
+function fmt(v,unit){ if(v===null||v===undefined||isNaN(v)) return '';
+  if(unit==='원'&&Math.abs(v)>=1e8) return nf(v/1e8,1)+'억';
+  if(unit==='원') return nf(v,0);
+  if(unit==='천원') return nf(v,0);
+  return nf(v,Math.abs(v)<10?4:2).replace(/(\.\d*?)0+$/,'$1').replace(/\.$/,''); }
+const unitOf=i=>{ if(i.p) return i.p.unit; const m=(i.f.label||'').match(/\(([^)]+)\)\s*$/); return m?m[1]:''; };
+const U=(c,y)=>((st.user[c]||{})[y])||{};
+function setU(c,y,k,v){ st.user[c]=st.user[c]||{}; st.user[c][y]=st.user[c][y]||{}; if(v===''||v===null||isNaN(v)) delete st.user[c][y][k]; else st.user[c][y][k]=v; save(); }
+function actual(i,y){ const u=U(i.c,y); if(u.a!==undefined) return {v:u.a,src:'입력'}; if(i.p&&i.p.v[y]!==undefined) return {v:i.p.v[y],src:i.p.match}; return null; }
+function target(i,y){ const u=U(i.c,y); if(u.t!==undefined) return {v:u.t,src:'입력'}; const py=String(+y-1);
+  if(i.p&&i.p.match!=='참고'&&i.p.v[py]!==undefined) return {v:i.p.v[py],src:'전년도 공시값'}; return null; }
+function rate(i,y){ const a=actual(i,y), t=target(i,y); if(!a||!t) return null; const low=i.p&&i.p.lower;
+  if(low){ if(a.v<=0) return null; return t.v/a.v*100; } if(t.v<=0) return null; return a.v/t.v*100; }
+const weight=i=>{ const w=(st.user[i.c]||{}).w; return w!==undefined?w:(i.w||1); };
+function agg(items,y){ let s=0,w=0,n=0; items.forEach(i=>{const r=rate(i,y); if(r===null) return; const ww=weight(i); s+=Math.min(r,130)*ww; w+=ww; n++;}); return w?{v:s/w,n}:null; }
+function kpiScore(k,y){ const subs=[...new Set(D.ind.filter(i=>i.k===k).map(i=>i.s))]; let s=0,w=0,n=0;
+  subs.forEach(sb=>{const a=agg(D.ind.filter(i=>i.s===sb),y); if(!a) return; const ww=D.subw[sb]||1; s+=a.v*ww; w+=ww; n+=a.n;}); return w?{v:s/w,n}:null; }
+function areaScore(a,y){ const ks=Object.keys(D.kpi).filter(k=>k[0]===a); let s=0,c=0,n=0; ks.forEach(k=>{const r=kpiScore(k,y); if(r){s+=r.v;c++;n+=r.n;}}); return c?{v:s/c,n}:null; }
+function allScore(y){ let s=0,c=0,n=0; D.areas.forEach(([a])=>{const r=areaScore(a,y); if(r){s+=r.v;c++;n+=r.n;}}); return c?{v:s/c,n}:null; }
+const scope=()=>D.ind.filter(i=>st.area==='ALL'||i.c[0]===st.area);
+function filtered(){ const q=st.q.trim().toLowerCase(); return scope().filter(i=>(!st.dept||i.cd===st.dept)&&(!st.grades.length||st.grades.includes(i.g))&&(!st.pub||i.p)&&(!q||(i.c+' '+i.n+' '+i.cn).toLowerCase().includes(q))); }
+function gbar(items){ const c={'○':0,'△':0,'×':0}; items.forEach(i=>c[i.g]++); const b=el('div',{class:'gbar',role:'img','aria-label':`즉시 산출 ${c['○']}, 조건부 ${c['△']}, 산출 불가 ${c['×']}`});
+  ['○','△','×'].forEach(g=>{ if(c[g]) b.append(el('i',{class:G[g][0],style:`flex:${c[g]}`,title:`${g} ${G[g][1]} ${c[g]}개`})); }); return {b,c}; }
+function pill(g){ return el('span',{class:'pill gr',title:G[g][1]},el('span',{class:'dot '+G[g][0]}),g); }
+function spark(i){ const ys=Object.keys(i.p.v).sort(); const vs=ys.map(y=>i.p.v[y]); const mn=Math.min(...vs), mx=Math.max(...vs); const W=56,H=20,p=3;
+  const X=k=>p+k*(W-2*p)/Math.max(1,vs.length-1), Yy=v=>mx===mn?H/2:H-p-(v-mn)*(H-2*p)/(mx-mn);
+  const ns='http://www.w3.org/2000/svg'; const s=document.createElementNS(ns,'svg'); s.setAttribute('width',W); s.setAttribute('height',H); s.setAttribute('viewBox',`0 0 ${W} ${H}`); s.setAttribute('role','img');
+  s.setAttribute('aria-label',ys.map((y,k)=>`${y}년 ${fmt(vs[k],i.p.unit)}`).join(', '));
+  const t=document.createElementNS(ns,'title'); t.textContent=ys.map((y,k)=>`${y}년 공시 ${fmt(vs[k],i.p.unit)}${i.p.unit}`).join('\n'); s.append(t);
+  const pl=document.createElementNS(ns,'polyline'); pl.setAttribute('points',vs.map((v,k)=>X(k)+','+Yy(v)).join(' ')); pl.setAttribute('fill','none'); pl.setAttribute('stroke','var(--accent)'); pl.setAttribute('stroke-width','2'); pl.setAttribute('stroke-linejoin','round'); s.append(pl);
+  const idx=ys.indexOf(st.year); const k=idx<0?vs.length-1:idx; const c=document.createElementNS(ns,'circle'); c.setAttribute('cx',X(k)); c.setAttribute('cy',Yy(vs[k])); c.setAttribute('r','3.5'); c.setAttribute('fill','var(--accent)'); c.setAttribute('stroke','var(--surface)'); c.setAttribute('stroke-width','1.5'); s.append(c); return s; }
+function meter(r){ if(r===null) return el('div',{class:'meter'},el('span',{class:'none',text:'목표 없음'}));
+  return el('div',{class:'meter',title:'목표 대비 달성률'},el('div',{class:'bar'},el('i',{style:`width:${Math.min(r,130)/130*100}%`})),el('span',{class:'pc',text:nf(r,1)+'%'})); }
+function scoreTxt(s){ return s?el('span',{class:'score'},'달성률 ',el('b',{text:nf(s.v,1)+'%'}),` (지표 ${s.n}개 기준)`):el('span',{class:'score',text:'달성률 계산 가능한 지표 없음'}); }
+
+function renderYears(){ const b=$('years'); b.replaceChildren(...YEARS.map(y=>el('button',{class:'seg','aria-pressed':String(st.year===y),text:y,onclick:()=>{st.year=y;render();}}))); }
+function renderAreas(){ const box=$('areas'); const mk=(key,lt,ti,items,sc)=>{ const g=gbar(items); const pubN=items.filter(i=>i.p).length;
+    return el('button',{class:'area','aria-pressed':String(st.area===key),onclick:()=>{st.area=key;st.open=null;st.dept='';try{history.replaceState(null,'',key==='ALL'?'#':'#area-'+key.toLowerCase());}catch(e){} render();}},
+      el('div',{class:'nm'},el('span',{class:'lt',text:lt}),el('span',{class:'ti',text:ti})), g.b,
+      el('div',{class:'meta'},el('span',{text:`${items.length}개 · 공시 ${pubN}`}),el('span',{text:sc?nf(sc.v,1)+'%':'-',title:'목표 대비 달성률'}))); };
+  box.replaceChildren(mk('ALL','전체','6개 영역',D.ind,allScore(st.year)),...D.areas.map(([a,n])=>mk(a,a,n,D.ind.filter(i=>i.c[0]===a),areaScore(a,st.year)))); }
+function renderTiles(){ const items=scope(); const g=gbar(items); const pubI=items.filter(i=>i.p); const withA=items.filter(i=>actual(i,st.year)); const sc=st.area==='ALL'?allScore(st.year):areaScore(st.area,st.year);
+  const kN=new Set(items.map(i=>i.k)).size, sN=new Set(items.map(i=>i.s)).size;
+  const t=(k,v,sm,d,extra)=>el('div',{class:'tile'},el('div',{class:'k',text:k}),el('div',{class:'v'},v,sm?el('small',{text:sm}):null),d?el('div',{class:'d',text:d}):null,extra||null);
+  const lg=el('div',{class:'legend'},...['○','△','×'].map(x=>el('span',null,el('span',{class:'dot '+G[x][0]}),` ${x} ${G[x][1]} ${g.c[x]}개`)));
+  $('tiles').replaceChildren(
+    t(st.area==='ALL'?'전체 세부지표':AREA[st.area]+' 영역 세부지표',String(items.length),'개',`핵심 KPI ${kN}개, Sub KPI ${sN}개`),
+    t('진단등급',nf(g.c['○']/items.length*100,0)+'%','즉시 산출 가능',null,el('div',null,g.b,lg)),
+    t(st.year+'년 실적이 있는 지표',String(withA.length),'개',`대학알리미 공시 연결 ${pubI.length}개, 나머지는 교내 자료 입력 필요`),
+    t(st.year+'년 목표 대비 달성률',sc?nf(sc.v,1)+'%':'없음',sc?`지표 ${sc.n}개 기준`:'',sc?'목표 미입력 지표는 전년도 공시값 기준':'실적과 목표가 모두 있는 지표가 없습니다')); }
+function renderFilters(){ const ds=[...new Set(scope().map(i=>i.cd))].sort(); const s=$('f-dept'); s.replaceChildren(el('option',{value:'',text:'전체 부서'}),...ds.map(d=>el('option',{value:d,text:`${d} (${scope().filter(i=>i.cd===d).length})`}))); s.value=ds.includes(st.dept)?st.dept:''; if(!ds.includes(st.dept)) st.dept='';
+  $('f-grade').replaceChildren(...['○','△','×'].map(g=>el('button',{class:'chip','aria-pressed':String(st.grades.includes(g)),title:G[g][1],onclick:()=>{st.grades=st.grades.includes(g)?st.grades.filter(x=>x!==g):[...st.grades,g];render();}},el('span',{class:'dot '+G[g][0]}),' '+g)));
+  $('f-pub').setAttribute('aria-pressed',String(st.pub)); }
+function formula(i){ const f=i.f; const box=el('div',{class:'formula'},el('div',{class:'lb',text:(f.label||i.n)+' ='}));
+  if(f.num) box.append(el('div',{class:'frac'},el('span',{class:'fr'},el('span',{text:f.num}),el('span',{text:f.den})),f.mult?el('span',{text:f.mult}):null));
+  else box.append(el('div',{text:f.text||''})); return box; }
+function detail(i){ const y=st.year, u=unitOf(i); const left=el('section'), right=el('section');
+  left.append(el('h3',{text:'지표 개념'}),el('p',{text:i.cp}),el('h3',{text:'산출식'}),formula(i));
+  if(i.nt&&i.nt.length) left.append(el('ul',{class:'notes'},...i.nt.map(n=>el('li',{text:n}))));
+  left.append(el('h3',{text:'데이터 수집 및 관리 기준'}),el('p',{text:i.dt}),el('h3',{text:'주 관리부서'}),el('p',null,el('b',{text:i.cd}),' (점검표) · ',i.dd,' (정의서)'));
+  if(i.n!==i.cn) left.append(el('p',{class:'small',text:'점검표 표기 지표명: '+i.cn}));
+  right.append(el('h3',{text:'점검표 검토의견'}));
+  const dl=el('dl',{class:'judge'}); i.j.forEach((o,k)=>{dl.append(el('dt',{text:JL[k]}),el('dd',{text:o.join(' / ')||'표기 없음'}));}); dl.append(el('dt',{text:'진단등급'}),el('dd',null,pill(i.g),' '+G[i.g][1])); right.append(dl);
+  if(i.j.some(o=>o.length>1)) right.append(el('div',{class:'warnbox',text:'점검표 원문에 판단 유형이 두 개 함께 적혀 있습니다. 하나로 확정이 필요합니다.'}));
+  if(i.p){ right.append(el('h3',{text:'대학알리미 공시 수치'}));
+    const ys=Object.keys(i.p.v).sort(); right.append(el('div',{class:'tw'},el('table',{class:'t'},el('thead',null,el('tr',null,el('th',{text:i.p.label+(i.p.unit?` (${i.p.unit})`:'')}),...ys.map(yy=>el('th',{text:yy+'년 공시'})))),
+      el('tbody',null,el('tr',null,el('td',null,el('span',{class:'tag pub',text:i.p.match})),...ys.map(yy=>el('td',{text:(i.p.unit==='원'?nf(i.p.v[yy],0):fmt(i.p.v[yy],i.p.unit))})))))));
+    right.append(el('p',{class:'small',style:'margin-top:6px',text:`출처: ${i.p.src} · 기준: ${i.p.basis}${i.p.lower?' · 낮을수록 좋은 지표':''}`}),el('p',{class:'small',text:i.p.note}));
+    if(i.p.match==='참고') right.append(el('div',{class:'warnbox',text:'공시 항목이 지표 정의와 일치하지 않아 참고값으로만 표시합니다. 달성률은 목표를 입력해야 계산됩니다.'}));
+  } else right.append(el('div',{class:'warnbox',text:'대학알리미에 대응하는 공시 항목이 없습니다. 교내 자료로 실적을 입력하면 달성률이 계산됩니다.'}));
+  if(i.i) right.append(el('p',{class:'small',text:i.i}));
+  const a=actual(i,y), t=target(i,y), uu=U(i.c,y), w=(st.user[i.c]||{}).w;
+  const inp=(id,lab,val,ph,fn)=>el('label',{for:id},lab,el('input',{id,type:'number',step:'any',inputmode:'decimal',value:val===undefined?'':val,placeholder:ph,onchange:e=>{fn(e.target.value===''?'':parseFloat(e.target.value));render();}}));
+  right.append(el('h3',{text:`${y}년 실적과 목표 입력`}),el('div',{class:'inputs'},
+    inp('in-a-'+i.c,`실적${u?' ('+u+')':''}`,uu.a,a&&a.src!=='입력'?fmt(a.v,u)+' (공시)':'입력',v=>setU(i.c,y,'a',v)),
+    inp('in-t-'+i.c,`목표${u?' ('+u+')':''}`,uu.t,t&&t.src!=='입력'?fmt(t.v,u)+' (전년도)':'입력',v=>setU(i.c,y,'t',v)),
+    inp('in-w-'+i.c,'Sub KPI 내 가중치',w,String(i.w||1),v=>{st.user[i.c]=st.user[i.c]||{}; if(v===''||isNaN(v)||v<0) delete st.user[i.c].w; else st.user[i.c].w=v; save();})));
+  const r=rate(i,y); right.append(el('p',{class:'small',text:r===null?'실적과 목표가 모두 있어야 달성률이 계산됩니다.':`달성률 ${nf(r,1)}% = ${i.p&&i.p.lower?'목표 ÷ 실적':'실적 ÷ 목표'} (실적 ${fmt(a.v,u)}${u}: ${a.src}, 목표 ${fmt(t.v,u)}${u}: ${t.src})`}));
+  return el('div',{class:'detail',id:'detail-'+i.c},left,right); }
+function row(i){ const y=st.year, a=actual(i,y), u=unitOf(i);
+  const v=el('div',{class:'val'}); if(a){ if(i.p) v.append(spark(i)); v.append(el('span',null,el('span',{class:'num',text:fmt(a.v,u)}),el('span',{class:'u',text:u}))); v.append(el('span',{class:'tag'+(a.src==='입력'?'':' pub'),text:a.src})); } else v.append(el('span',{class:'none',text:i.p?'해당 연도 공시 없음':'교내 자료 필요'}));
+  const open=st.open===i.c;
+  const b=el('button',{class:'row','aria-expanded':String(open),'aria-controls':'detail-'+i.c,id:'row-'+i.c,onclick:()=>{st.open=open?null:i.c;renderList();}},
+    el('span',{class:'c',text:i.c}),el('span',{class:'n',text:i.n}),el('span',{class:'dp',text:i.cd}),pill(i.g),v,meter(rate(i,y)));
+  return open?[b,detail(i)]:[b]; }
+function renderList(){ const items=filtered(); $('count').textContent=`${items.length}개 지표 표시 · 행을 누르면 정의서와 수치가 펼쳐집니다`;
+  const box=$('list'); if(!items.length){ box.replaceChildren(el('div',{class:'empty',text:'조건에 맞는 지표가 없습니다. 필터를 줄여 보세요.'})); return; }
+  const out=[]; const ks=[...new Set(items.map(i=>i.k))];
+  ks.forEach(k=>{ const sec=el('section',{class:'kpi',id:'kpi-'+k}); sec.append(el('h2',null,el('span',null,el('span',{class:'code',text:'KPI-'+k}),D.kpi[k]),scoreTxt(kpiScore(k,st.year))));
+    [...new Set(items.filter(i=>i.k===k).map(i=>i.s))].forEach(s=>{ const sa=agg(D.ind.filter(i=>i.s===s),st.year);
+      sec.append(el('div',{class:'subh'},el('span',{text:`Sub KPI-${s}. ${D.sub[s]}`}),el('span',{class:'score',text:(D.subw[s]?`가중치 ${D.subw[s]} · `:'')+(sa?`달성률 ${nf(sa.v,1)}%`:'달성률 없음')})));
+      items.filter(i=>i.s===s).forEach(i=>sec.append(...row(i))); });
+    out.push(sec); });
+  box.replaceChildren(...out); }
+function render(){ renderYears(); renderAreas(); renderTiles(); renderFilters(); renderList(); }
+$('f-dept').addEventListener('change',e=>{st.dept=e.target.value;renderList();});
+$('f-pub').addEventListener('click',()=>{st.pub=!st.pub;render();});
+$('f-q').addEventListener('input',e=>{st.q=e.target.value;renderList();});
+$('reset').addEventListener('click',()=>{st.user={};save();render();});
+window.__kpi={st,rate,agg,kpiScore,areaScore,allScore,D};
+render();
+})();
+</script>
+</body>
+</html>
