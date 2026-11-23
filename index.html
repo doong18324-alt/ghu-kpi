@@ -143,6 +143,19 @@ footer{color:var(--muted);font-size:12px;max-width:80ch;border-top:1px solid var
 .ins b{font-weight:600}
 .acard h3{margin:0 0 10px;font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:-.02em;display:flex;gap:8px;align-items:baseline}
 .acard h3 span{color:var(--accent)}
+
+.sol{display:flex;flex-direction:column;gap:10px}
+.sol h3{margin:0;font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:-.02em;line-height:1.3}
+.sol .hd{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pr{display:inline-flex;align-items:center;gap:6px;border-radius:980px;padding:2px 10px;font-size:12px;font-weight:600;background:var(--surface-2)}
+.sol p{margin:0;font-size:14.5px;max-width:70ch}
+.sol .lbl{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.02em;margin-top:4px}
+.sol ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.rel{display:flex;flex-wrap:wrap;gap:6px}
+.rel button{border:0;background:var(--accent-soft);color:var(--accent);border-radius:980px;padding:3px 11px;font-size:12.5px;font-weight:600}
+.rel button:hover{text-decoration:underline}
+.grp{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.02em;margin:18px 0 0}
+.note{background:var(--accent-soft);border-radius:14px;padding:12px 16px;font-size:13.5px;max-width:none}
 @media (max-width:860px){
   header.top{padding:32px 0 4px}
   .row{grid-template-columns:1fr auto;grid-template-areas:"c g" "n n" "dp dp" "v v" "m m";gap:3px 8px;padding:14px 18px}
@@ -180,6 +193,7 @@ footer{color:var(--muted);font-size:12px;max-width:80ch;border-top:1px solid var
   </div>
   <div id="v-compare" style="display:flex;flex-direction:column;gap:12px"></div>
   <div id="v-analysis" style="display:flex;flex-direction:column;gap:12px"></div>
+  <div id="v-solution" style="display:flex;flex-direction:column;gap:12px"></div>
   <footer>
     <p><b>자료</b> 지표 구조, 산출식, 주 관리부서는 영역별 세부지표 정의서 6종에서, 검토의견과 진단등급은 「대학 성과지표체계 점검표」(2026-10-21)에서 가져왔습니다. 실적 수치는 대학알리미 광주보건대학교[본교] 공시(2024, 2025, 2026년 공시, 2026-11-23 조회)입니다.</p>
     <p><b>달성률</b> 목표를 직접 입력하지 않은 지표는 전년도 공시값을 임시 목표로 씁니다. 낮을수록 좋은 지표는 목표 ÷ 실적으로 계산하고, 합산할 때 지표별 달성률은 130%까지만 반영합니다. Sub KPI 점수는 가중 평균이며 가중치는 S1만 정의서 예시값(0.5, 0.3, 0.2 등)이고 나머지는 균등입니다. 입력한 실적, 목표, 가중치는 이 브라우저에만 저장됩니다. <button class="linkbtn" id="reset">입력값 모두 지우기</button></p>
@@ -297,7 +311,7 @@ function renderList(){ const items=filtered(); $('count').textContent=`${items.l
 const NS='http://www.w3.org/2000/svg';
 const sv=(t,a,txt)=>{const e=document.createElementNS(NS,t); for(const k in a) e.setAttribute(k,a[k]); if(txt!==undefined) e.textContent=txt; return e;};
 const tip=(e,t)=>{e.append(sv('title',{},t)); return e;};
-const VIEWS=[['list','지표 목록'],['compare','연도별 비교'],['analysis','영역 분석']];
+const VIEWS=[['list','지표 목록'],['compare','연도별 비교'],['analysis','영역 분석'],['solution','AI 분석 솔루션']];
 function renderViews(){ $('views').replaceChildren(...VIEWS.map(([k,n])=>el('button',{class:'seg','aria-pressed':String(st.view===k),text:n,onclick:()=>{st.view=k;render();}})));
   VIEWS.forEach(([k])=>{$('v-'+k).style.display=st.view===k?'flex':'none';}); }
 const scoreOf=(a,y)=>a==='ALL'?allScore(y):areaScore(a,y);
@@ -358,7 +372,85 @@ function renderAnalysis(){ const y=st.year; const by=a=>D.ind.filter(i=>i.c[0]==
     ys.map((yy,k)=>({name:`${yy}년 달성률`,color:ys.length===1||k===1?'var(--s1)':'var(--s2)',f:a=>{const r=areaScore(a,yy); return r?r.v:null;}})),'radar-score',130,[50,100,130]);
   const cards=(st.area==='ALL'?D.areas.map(x=>x[0]):[st.area]).map(insight);
   $('v-analysis').replaceChildren(el('div',{class:'grid2'},r1,r2),el('div',{class:'grid2'},...cards)); }
-function render(){ renderYears(); renderAreas(); renderTiles(); renderViews(); renderFilters(); renderList(); renderCompare(); renderAnalysis(); }
+
+const IND=Object.fromEntries(D.ind.map(i=>[i.c,i]));
+const trend=c=>{const p=IND[c].p; const ys=Object.keys(p.v).sort(); return `${p.label}: `+ys.map(y=>`${fmt(p.v[y],p.unit)}`).join(' → ')+` ${p.unit} (${ys[0]}~${ys[ys.length-1]}년 공시)`;};
+const cnt=f=>D.ind.filter(f).length;
+const SOL=[
+ {g:'실적에서 보이는 신호',pr:'높음',a:['I','M'],t:'특허 실적이 2년 연속 줄었고 기술이전은 3년째 0건입니다',
+  d:'연구비 수주는 늘었는데 지식재산 창출과 이전으로 이어지지 않고 있습니다. 산학협력 영역의 달성률을 끌어내리는 직접 원인입니다.',
+  e:()=>[trend('I2-1-1'),trend('I2-1-2'),trend('M1-3-2')],
+  x:['연구과제 종료 보고 단계에 지식재산 출원 검토 항목을 넣어 과제와 출원을 연결합니다.','기술이전 건수는 당장 실적이 나오기 어려우므로 기술상담, 기술마케팅 건수 같은 선행 지표를 함께 두고 단계적으로 관리합니다.','학과별 출원 목표를 연초에 배분하고 분기별로 점검합니다.'],dp:'산학협력단',r:['I2-1-1','I2-1-2','M1-3-3','M1-3-4','M1-3-2']},
+ {g:'실적에서 보이는 신호',pr:'높음',a:['S'],t:'취업률과 유지취업률이 함께 내려가고 있습니다',
+  d:'취업률 78.6, 75.0, 74.9%와 2차 유지취업률 84.7, 84.5, 83.8%가 3개 연도 연속 하락했습니다. 하락 폭은 작지만 방향이 일관됩니다.',
+  e:()=>[trend('S3-2-1')],
+  x:['학과별 취업률과 유지취업률을 분리해 하락을 주도한 학과를 먼저 확인합니다.','점검표에서 조건부(△)인 전공일치 취업률의 추적조사 절차를 먼저 만들어 취업의 질을 함께 봅니다.','졸업생 정주 취업률(I3-2-2)과 같은 원자료(KEDI 취업통계)를 쓰므로 한 번의 추출로 두 지표를 산출하도록 묶습니다.'],dp:'학생취업처',r:['S3-2-1','S3-2-2','I3-2-2']},
+ {g:'실적에서 보이는 신호',pr:'중간',a:['S'],t:'기숙사 수용 인원이 줄었습니다. 중도탈락과 함께 추적할 필요가 있습니다',
+  d:'수용가능인원이 501명에서 406명으로 줄어 수용률이 14.4%에서 11.5%로 내려갔습니다. 중도탈락률은 지금까지 개선 중이지만, 정주 여건은 문제점 진단 문서가 꼽은 중도탈락 원인 지표입니다.',
+  e:()=>[trend('S2-2-1'),trend('S1-1-3')],
+  x:['중도탈락률을 총괄 부서 1곳과 협조 부서 여러 곳이 함께 책임지는 지표로 시범 지정합니다.','기숙사 만족도 조사에 통학 거리와 수용 형태 문항을 넣어 중도탈락 자료와 학번 기준으로 연결합니다.'],dp:'교무처(총괄), 학생취업처, 총무처',r:['S2-2-1','S1-1-3','S2-2-2']},
+ {g:'실적에서 보이는 신호',pr:'중간',a:['M'],t:'전임교원 확보율이 60%대에 머물러 있습니다',
+  d:'학생정원 기준 확보율이 65.0, 63.35, 66.67%이고 재학생 기준으로는 61% 안팎입니다. 비전임교원 비율은 65%에서 67%대로 올랐습니다.',
+  e:()=>[trend('M1-1-1'),trend('M1-1-2')],
+  x:['대외 평가에서 쓰는 기준(학생정원, 재학생)을 정해 목표치를 그 기준으로 설정합니다.','재학생이 늘어나는 학과부터 충원 우선순위를 정합니다.'],dp:'교무처',r:['M1-1-1','M1-1-2']},
+ {g:'실적에서 보이는 신호',pr:'중간',a:['G'],t:'등록금 의존도가 57% 선에서 움직이지 않습니다',
+  d:'외부 재원은 늘었지만 등록금수입도 함께 늘어 의존도는 거의 그대로입니다. 지표가 완화율이므로 현재 구조에서는 목표 달성이 어렵습니다.',
+  e:()=>[trend('G1-1-1'),trend('G1-2-2'),trend('I2-2-3')],
+  x:['완화율 목표를 연 몇 %p로 둘지 먼저 정하고, 산학협력단 전입금과 기부금 목표를 거기에 맞춥니다.','산학협력단 수익이 105.9억에서 150.8억원으로 늘었으므로 교비 전입 규모를 지표와 연결해 관리합니다.'],dp:'총무처, 기획처',r:['G1-1-1','G1-2-2','I2-2-3','G1-2-1']},
+ {g:'실적에서 보이는 신호',pr:'참고',a:['S','M','I','G'],t:'개선 흐름이 뚜렷한 지표',
+  d:'아래 지표는 3개 연도 동안 한 방향으로 나아졌습니다. 목표를 전년도 수준이 아니라 더 높게 잡아도 되는 후보입니다.',
+  e:()=>[trend('S1-1-1'),trend('S1-1-3'),trend('S2-1-2'),trend('M1-3-1'),trend('G3-1-1')],
+  x:['이 지표들은 전년 대비가 아닌 중장기 목표치를 따로 입력해 달성률을 다시 봅니다.'],dp:'기획처',r:['S1-1-1','S1-1-3','S2-1-2','M1-3-1','G3-1-1']},
+ {g:'지표 체계 정비',pr:'높음',a:['S','M','I','L','E','G'],t:'영역이 다른데 사실상 같은 것을 재는 지표가 10쌍 있습니다',
+  d:'같은 자료를 두 영역에서 따로 관리하면 수치가 어긋나고 부서 업무가 두 배가 됩니다. 한쪽을 기준 지표로 정하고 다른 쪽은 그 값을 가져다 쓰는 방식이 맞습니다.',
+  e:()=>['M1-3-3 특허 출원/등록 건수 = I2-1-1 지식재산권 출원 및 등록 건수','M1-3-4 기술이전 건수 = I2-1-2 기술이전 계약 건수','M1-2-4 교과목 CQI 수행률 = E4-1-1 과목 CQI 수행률','M1-2-3 강의평가 점수 = E3-2-2 강의만족도','M1-2-5 첨단 교수법 적용률 = E2-1-1 혁신 교수법 적용률','S3-1-1 CROSS 핵심역량 향상도 = E3-1-1 CROSS 핵심역량 지수 및 향상도','E1-1-4 소단위학위과정 개설 수 = L2-1-3 소단위학위과정 개설 수','S3-2-3 현장실습 참여율 = I1-2-1, I1-2-2 현장실습 참여 인원과 이수율','M3-2-2 지역사회 문제해결 지원 실적 = I3-1-2 지역사회 문제해결 프로그램 운영 수','M3-1-3 소통 만족도 = G4-2-2 구성원 의사소통 지수'],
+  x:['쌍마다 기준 영역 하나를 정하고 지표 정의서에 "연동 지표"로 적습니다.','특히 특허와 기술이전은 현재 M과 I 양쪽 달성률을 동시에 낮추고 있어 먼저 정리합니다.'],dp:'기획처',r:['M1-3-3','I2-1-1','M1-2-4','E4-1-1','S3-1-1','E3-1-1','E1-1-4','L2-1-3']},
+ {g:'지표 체계 정비',pr:'높음',a:['S','M','L','G'],t:'산출 불가(×) 6개 지표의 대체안',
+  d:'점검표가 유보·대체형으로 분류한 지표입니다. 새 조사 없이 이미 있는 지표나 자료로 바꾸는 안을 제안합니다.',
+  e:()=>D.ind.filter(i=>i.g==='×').map(i=>`${i.c} ${i.n} (${i.cd})`),
+  x:['S3-1-4 역량 마일리지 취득률: 비교과 참여율 및 이수율(S3-1-2)로 통합합니다.','M1-1-3 강의담당 적합도: 강의계획서 적합도(E1-2-3)의 승인 로그에 전공 적합 항목을 추가해 대체합니다.','M2-2-1 인사평가 적정성: 직원 만족도(M3-1-2) 조사의 세부 문항으로 넣습니다.','M2-2-3 승진 소요기간 적정성: 성과지표에서 빼고 인사 통계로만 모니터링합니다.','L3-1-3 경력단절자 및 신중년 재취업률: 이수자 자격취득률(L3-1-1) 추적조사에 취업 여부 문항을 더합니다.','G2-1-3 업무처리 시간 단축률: 전자문서 처리율(G2-1-2)과 자동화 적용 업무 수로 바꿉니다.'],dp:'기획처, 해당 주 관리부서',r:['S3-1-4','M1-1-3','M2-2-1','M2-2-3','L3-1-3','G2-1-3']},
+ {g:'지표 체계 정비',pr:'중간',a:['S','M','I','L','E','G'],t:'만족도 설문 지표를 한 번의 통합 조사로 묶습니다',
+  d:'문제점 진단 문서가 지적한 설문 피로와 같은 내용입니다. 이름에 만족도가 들어간 지표가 여러 영역에 흩어져 있습니다.',
+  e:()=>[`지표명에 "만족도"가 들어간 지표 ${cnt(i=>i.n.includes('만족도'))}개: `+D.ind.filter(i=>i.n.includes('만족도')).map(i=>i.c).join(', ')],
+  x:['재학생용, 교직원용 통합 조사 2종으로 줄이고 문항 묶음별로 각 지표 값을 뽑습니다.','조사 주관은 기획처(IR)로 일원화하고 각 부서는 결과만 받아 관리합니다.'],dp:'기획처',r:['S2-2-3','M3-1-1','M3-1-2','E3-2-3','G2-2-2','G4-2-1']},
+ {g:'지표 체계 정비',pr:'중간',a:['S','M','I','G'],t:'점검표와 정의서 사이의 불일치를 확정합니다',
+  d:'대시보드로 옮기는 과정에서 문서 간 차이가 확인되었습니다. 확정 전까지는 지표 상세 화면에 두 값을 모두 표시합니다.',
+  e:()=>[`시스템 구현 가능성 판단이 두 가지로 적힌 지표 ${cnt(i=>i.j.some(o=>o.length>1))}개`,'주 관리부서가 다른 예: S3-1-5 면허시험 합격률(점검표 학생취업처, 정의서 교무처), S3-2-4 창업 프로그램 수료자 수(점검표 학생취업처, 정의서 산학협력단)','G 영역 정의서는 사무처, 점검표는 총무처로 표기','산출식 표기 확인 필요: S2-2-3의 산출식 명칭, 1인당 장학금과 1인당 연구비의 "× 100"'],
+  x:['판단 유형이 둘인 지표는 하나로 확정합니다.','주 관리부서는 점검표 기준으로 통일할지 정합니다.'],dp:'기획처',r:['S3-1-5','S3-2-4','S2-2-3','S2-1-2','I2-2-2']},
+ {g:'데이터와 운영',pr:'높음',a:['L','E'],t:'평생교육과 교육품질 영역은 실적 자료가 거의 비어 있습니다',
+  d:'두 영역은 즉시 산출 가능(○) 비율이 70%와 76%로 가장 높은데도 공시 항목이 없어 실적이 없습니다. 교내 시스템에서 바로 뽑을 수 있는 자료부터 채우는 것이 가장 빠릅니다.',
+  e:()=>[`L 영역: 지표 ${cnt(i=>i.c[0]==='L')}개 중 공시 연결 ${cnt(i=>i.c[0]==='L'&&i.p)}개`,`E 영역: 지표 ${cnt(i=>i.c[0]==='E')}개 중 공시 연결 ${cnt(i=>i.c[0]==='E'&&i.p)}개`,`두 영역의 ○ 등급 지표 ${cnt(i=>'LE'.includes(i.c[0])&&i.g==='○')}개는 점검표상 종합정보시스템이나 LMS에서 바로 추출할 수 있습니다.`],
+  x:['교무처와 평생교육원에 ○ 등급 지표의 최근 3개 연도 값을 요청해 대시보드에 입력합니다.','입력 양식은 이 대시보드의 지표 코드와 단위를 그대로 씁니다.'],dp:'교무처, 평생교육원, 기획처',r:['L1-1-1','L1-2-1','L2-1-1','E1-1-1','E3-2-2','E4-1-1']},
+ {g:'데이터와 운영',pr:'높음',a:['S','M','I','L','E','G'],t:'목표치와 가중치를 정해야 달성률이 의미를 가집니다',
+  d:'지금 달성률은 전년도 공시값을 임시 목표로 쓴 것이어서 전년 대비 변화만 보여줍니다. 가중치도 S1 한 곳만 정의되어 있습니다.',
+  e:()=>[`실적과 목표가 모두 있어 달성률이 계산되는 지표: ${st.year}년 ${cnt(i=>rate(i,st.year)!==null)}개 / 전체 ${D.ind.length}개`,'가중치가 정의된 곳: KPI-S1의 Sub KPI 2개와 세부지표 7개'],
+  x:['주 관리부서가 연초에 지표별 목표치를 제출하고 기획처가 확정하는 절차를 둡니다.','가중치는 결과 지표에 0.6, 과정 지표에 0.4를 주는 S1 방식을 다른 KPI에도 적용할지 결정합니다.'],dp:'기획처, 전 부서',r:['S1-1-1','M3-2-1','G2-2-1']},
+ {g:'데이터와 운영',pr:'중간',a:['S','M','I','L','E','G'],t:'조건부(△) 지표는 부서별로 묶어 전산 개발을 요청합니다',
+  d:'△ 지표의 대부분은 입력 필드가 없거나 부서 간 자료가 나뉘어 있는 경우입니다. 지표별로 따로 요청하기보다 부서 단위로 묶는 편이 개발 부담이 적습니다.',
+  e:()=>{const m={}; D.ind.filter(i=>i.g==='△').forEach(i=>m[i.cd]=(m[i.cd]||0)+1); return [`△ 지표 ${cnt(i=>i.g==='△')}개의 부서별 분포: `+Object.entries(m).sort((x,z)=>z[1]-x[1]).map(x=>`${x[0]} ${x[1]}개`).join(', ')];},
+  x:['△ 지표가 많은 부서부터 필요한 입력 필드 목록을 만들어 전산 담당과 한 번에 협의합니다.','빅데이터 시스템 구축률(G2-1-1)의 목표 테이블 목록에 이 필드들을 포함합니다.'],dp:'AI대학혁신본부, 기획처',r:['G2-1-1','S1-2-3','S3-1-2','M1-2-1','E2-2-2']},
+ {g:'데이터와 운영',pr:'참고',a:['S','I'],t:'현장실습은 공시 기준과 교내 기준이 다릅니다',
+  d:'대학알리미 공시의 현장실습 이수학생은 0, 0, 10명입니다. 보건계열 임상실습이 공시 기준에서 빠져 있을 가능성이 높아, 지표 정의를 어느 기준으로 할지 정해야 합니다.',
+  e:()=>[trend('I1-2-1')],
+  x:['현장실습 지표의 분자를 공시 기준과 교내 임상실습 포함 기준 중 무엇으로 할지 정의서에 명시합니다.','두 기준을 모두 관리한다면 지표를 둘로 나눕니다.'],dp:'현장실습지원센터, 교무처',r:['I1-2-1','I1-2-2','S3-2-3']}
+];
+const PR={'높음':'g-x','중간':'g-t','참고':'g-o'};
+function goInd(c){ st.view='list'; st.area=c[0]; st.open=c; st.dept=''; st.grades=[]; st.pub=false; st.q=''; $('f-q').value=''; render(); const r=$('row-'+c); if(r) r.scrollIntoView({block:'center'}); }
+function renderSolution(){ const list=SOL.filter(x=>st.area==='ALL'||x.a.includes(st.area)); const box=$('v-solution');
+  const head=el('div',{class:'panel',id:'sol-head'},el('h2',{text:'AI 분석 솔루션'}),
+    el('p',{class:'cap',text:`첨부 문서 10종과 대학알리미 공시 수치를 AI(Claude)가 읽고 정리한 참고 의견 ${list.length}건입니다. 우선순위는 높음 ${list.filter(x=>x.pr==='높음').length}건, 중간 ${list.filter(x=>x.pr==='중간').length}건, 참고 ${list.filter(x=>x.pr==='참고').length}건입니다.`}),
+    el('p',{class:'note',text:'대학의 공식 판단이 아니라 검토용 초안입니다. 근거 수치는 대시보드 데이터에서 가져오며, 제안 조치는 실행 전에 해당 부서의 확인이 필요합니다. 화면을 열 때마다 새로 분석하는 기능은 아니고, 2026-11-23 기준으로 작성된 내용입니다.'}));
+  const out=[head]; let g='';
+  list.forEach((x,k)=>{ if(x.g!==g){ g=x.g; out.push(el('h2',{class:'grp',text:g})); }
+    out.push(el('div',{class:'panel sol',id:'sol-'+k},
+      el('div',{class:'hd'},el('span',{class:'pr'},el('span',{class:'dot '+PR[x.pr]}),'우선순위 '+x.pr),...x.a.map(a=>el('span',{class:'tag',text:a+' '+AREA[a]}))),
+      el('h3',{text:x.t}),el('p',{text:x.d}),
+      el('div',{class:'lbl',text:'근거'}),el('ul',null,...x.e().map(t=>el('li',{text:t}))),
+      el('div',{class:'lbl',text:'제안 조치'}),el('ul',null,...x.x.map(t=>el('li',{text:t}))),
+      el('div',{class:'lbl',text:'담당'}),el('p',{text:x.dp}),
+      el('div',{class:'lbl',text:'관련 지표 (누르면 해당 지표로 이동)'}),el('div',{class:'rel'},...x.r.map(c=>el('button',{text:c+' '+IND[c].n,onclick:()=>goInd(c)}))))); });
+  box.replaceChildren(...out); }
+function render(){ renderYears(); renderAreas(); renderTiles(); renderViews(); renderFilters(); renderList(); renderCompare(); renderAnalysis(); renderSolution(); }
 $('f-dept').addEventListener('change',e=>{st.dept=e.target.value;renderList();});
 $('f-pub').addEventListener('click',()=>{st.pub=!st.pub;render();});
 $('f-q').addEventListener('input',e=>{st.q=e.target.value;renderList();});
