@@ -156,6 +156,27 @@ footer{color:var(--muted);font-size:12px;max-width:80ch;border-top:1px solid var
 .rel button:hover{text-decoration:underline}
 .grp{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.02em;margin:18px 0 0}
 .note{background:var(--accent-soft);border-radius:14px;padding:12px 16px;font-size:13.5px;max-width:none}
+
+.lockbtn{border:1px solid var(--line);background:var(--surface);border-radius:980px;padding:5px 14px;font-size:13px;font-weight:500}
+.lockbtn.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.barR{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+dialog{border:0;border-radius:18px;padding:24px;background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3);width:min(420px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+dialog h2{margin:0 0 6px;font-family:var(--display);font-size:21px;letter-spacing:-.02em}
+dialog p{margin:0 0 14px;color:var(--ink-2);font-size:13.5px}
+dialog label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--ink-2);margin-bottom:10px}
+dialog input{background:var(--surface-2);border:1px solid transparent;border-radius:10px;padding:10px 12px}
+dialog input:focus{border-color:var(--accent)}
+.dbtns{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.btn{border:0;border-radius:980px;padding:8px 18px;font-size:14px;font-weight:500;background:var(--surface-2)}
+.btn.pri{background:var(--accent);color:#fff;font-weight:600}
+.msg{font-size:13px;min-height:1.4em;color:var(--crit);margin:0 0 6px}
+.msg.ok{color:var(--good-ink)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+table.in td input{width:120px;max-width:100%;background:var(--surface-2);border:1px solid transparent;border-radius:8px;padding:6px 8px;text-align:right}
+table.in td input:focus{border-color:var(--accent);background:var(--surface)}
+table.in td{font-weight:400}
+table.in tr.sec td{background:var(--surface-2);font-weight:600;font-size:12.5px;color:var(--ink-2);text-align:left}
 @media (max-width:860px){
   header.top{padding:32px 0 4px}
   .row{grid-template-columns:1fr auto;grid-template-areas:"c g" "n n" "dp dp" "v v" "m m";gap:3px 8px;padding:14px 18px}
@@ -171,12 +192,27 @@ footer{color:var(--muted);font-size:12px;max-width:80ch;border-top:1px solid var
 <body>
 <nav class="bar" aria-label="상단"><div class="in">
   <span class="brand">GHU 성과지표</span>
-  <div class="years" role="group" aria-label="공시연도"><span>공시연도</span><span id="years"></span></div>
+  <div class="barR"><button class="lockbtn" id="lock">정밀 버전</button>
+  <div class="years" role="group" aria-label="공시연도"><span>공시연도</span><span id="years"></span></div></div>
 </div></nav>
+<dialog id="dlg-open"><form method="dialog" id="f-open">
+  <h2>정밀 버전 열기</h2>
+  <p>교내 입력 자료가 반영된 버전입니다. 비밀번호는 이 브라우저 안에서 암호를 푸는 데만 쓰이고 어디에도 전송되지 않습니다.</p>
+  <label for="pw-open">비밀번호<input type="password" id="pw-open" autocomplete="current-password" required></label>
+  <p class="msg" id="msg-open"></p>
+  <div class="dbtns"><button type="button" class="btn" id="cancel-open">닫기</button><button type="submit" class="btn pri">열기</button></div>
+</form></dialog>
+<dialog id="dlg-enc"><form method="dialog" id="f-enc">
+  <h2>암호화 파일 만들기</h2>
+  <p>지금 입력된 실적, 목표, 가중치를 비밀번호로 암호화해 secure.json 파일로 저장합니다. 이 파일을 저장소에 올리면 비밀번호를 아는 사람만 정밀 버전을 볼 수 있습니다. 저장소가 공개이므로 12자 이상의 긴 비밀번호를 쓰세요.</p>
+  <label for="pw-enc1">비밀번호 (12자 이상)<input type="password" id="pw-enc1" autocomplete="new-password" minlength="12" required></label>
+  <label for="pw-enc2">비밀번호 확인<input type="password" id="pw-enc2" autocomplete="new-password" minlength="12" required></label>
+  <p class="msg" id="msg-enc"></p>
+  <div class="dbtns"><button type="button" class="btn" id="cancel-enc">닫기</button><button type="submit" class="btn pri">암호화해서 저장</button></div>
+</form></dialog>
 <div class="wrap">
   <header class="top">
     <h1>광주보건대 성과지표 대시보드</h1>
-    <p class="sub">SMILEG 6개 영역, 137개 세부지표. 정의서와 점검표, 대학알리미 공시 수치를 한 화면에서.</p>
   </header>
   <div class="areas" id="areas"></div>
   <div class="tiles" id="tiles"></div>
@@ -194,9 +230,10 @@ footer{color:var(--muted);font-size:12px;max-width:80ch;border-top:1px solid var
   <div id="v-compare" style="display:flex;flex-direction:column;gap:12px"></div>
   <div id="v-analysis" style="display:flex;flex-direction:column;gap:12px"></div>
   <div id="v-solution" style="display:flex;flex-direction:column;gap:12px"></div>
+  <div id="v-input" style="display:flex;flex-direction:column;gap:12px"></div>
   <footer>
     <p><b>자료</b> 지표 구조, 산출식, 주 관리부서는 영역별 세부지표 정의서 6종에서, 검토의견과 진단등급은 「대학 성과지표체계 점검표」(2026-10-21)에서 가져왔습니다. 실적 수치는 대학알리미 광주보건대학교[본교] 공시(2024, 2025, 2026년 공시, 2026-11-23 조회)입니다.</p>
-    <p><b>달성률</b> 목표를 직접 입력하지 않은 지표는 전년도 공시값을 임시 목표로 씁니다. 낮을수록 좋은 지표는 목표 ÷ 실적으로 계산하고, 합산할 때 지표별 달성률은 130%까지만 반영합니다. Sub KPI 점수는 가중 평균이며 가중치는 S1만 정의서 예시값(0.5, 0.3, 0.2 등)이고 나머지는 균등입니다. 입력한 실적, 목표, 가중치는 이 브라우저에만 저장됩니다. <button class="linkbtn" id="reset">입력값 모두 지우기</button></p>
+    <p><b>달성률</b> 목표를 직접 입력하지 않은 지표는 전년도 공시값을 임시 목표로 씁니다. 낮을수록 좋은 지표는 목표 ÷ 실적으로 계산하고, 합산할 때 지표별 달성률은 130%까지만 반영합니다. Sub KPI 점수는 가중 평균이며 가중치는 S1만 정의서 예시값(0.5, 0.3, 0.2 등)이고 나머지는 균등입니다. 입력한 실적, 목표, 가중치는 이 브라우저에만 저장됩니다. 다른 사람과 공유하려면 데이터 입력 화면에서 암호화 파일을 만들어 저장소에 올리세요. <button class="linkbtn" id="reset">입력값 모두 지우기</button></p>
   </footer>
 </div>
 <script src="data.js"></script>
@@ -206,7 +243,7 @@ const D=window.KPI_DATA, YEARS=['2024','2025','2026'];
 const AREA=Object.fromEntries(D.areas);
 const G={'○':['g-o','즉시 산출 가능'],'△':['g-t','조건부 산출 가능'],'×':['g-x','산출 불가, 재설계 필요']};
 const JL=['정책적 필요성','행정 효율성','시스템 구현 가능성'];
-let st={view:'list',area:'ALL',year:'2025',dept:'',grades:[],pub:false,q:'',open:null,user:{}};
+let st={secure:null,onlyEmpty:true,view:'list',area:'ALL',year:'2025',dept:'',grades:[],pub:false,q:'',open:null,user:{}};
 try{const s=JSON.parse(localStorage.getItem('ghu-kpi-v1')||'null'); if(s&&s.user) st.user=s.user;}catch(e){}
 const h=location.hash.replace('#area-','').toUpperCase(); if(AREA[h]) st.area=h;
 const save=()=>{try{localStorage.setItem('ghu-kpi-v1',JSON.stringify({user:st.user}));}catch(e){}};
@@ -219,14 +256,15 @@ function fmt(v,unit){ if(v===null||v===undefined||isNaN(v)) return '';
   if(unit==='천원') return nf(v,0);
   return nf(v,Math.abs(v)<10?4:2).replace(/(\.\d*?)0+$/,'$1').replace(/\.$/,''); }
 const unitOf=i=>{ if(i.p) return i.p.unit; const m=(i.f.label||'').match(/\(([^)]+)\)\s*$/); return m?m[1]:''; };
-const U=(c,y)=>((st.user[c]||{})[y])||{};
+const SRC=c=>Object.assign({},st.user[c]||{},st.secure?st.secure[c]||{}:{});
+const U=(c,y)=>Object.assign({},(st.user[c]||{})[y]||{},st.secure?((st.secure[c]||{})[y]||{}):{});
 function setU(c,y,k,v){ st.user[c]=st.user[c]||{}; st.user[c][y]=st.user[c][y]||{}; if(v===''||v===null||isNaN(v)) delete st.user[c][y][k]; else st.user[c][y][k]=v; save(); }
 function actual(i,y){ const u=U(i.c,y); if(u.a!==undefined) return {v:u.a,src:'입력'}; if(i.p&&i.p.v[y]!==undefined) return {v:i.p.v[y],src:i.p.match}; return null; }
 function target(i,y){ const u=U(i.c,y); if(u.t!==undefined) return {v:u.t,src:'입력'}; const py=String(+y-1);
   if(i.p&&i.p.match!=='참고'&&i.p.v[py]!==undefined) return {v:i.p.v[py],src:'전년도 공시값'}; return null; }
 function rate(i,y){ const a=actual(i,y), t=target(i,y); if(!a||!t) return null; const low=i.p&&i.p.lower;
   if(low){ if(a.v<=0) return null; return t.v/a.v*100; } if(t.v<=0) return null; return a.v/t.v*100; }
-const weight=i=>{ const w=(st.user[i.c]||{}).w; return w!==undefined?w:(i.w||1); };
+const weight=i=>{ const w=SRC(i.c).w; return w!==undefined?w:(i.w||1); };
 function agg(items,y){ let s=0,w=0,n=0; items.forEach(i=>{const r=rate(i,y); if(r===null) return; const ww=weight(i); s+=Math.min(r,130)*ww; w+=ww; n++;}); return w?{v:s/w,n}:null; }
 function kpiScore(k,y){ const subs=[...new Set(D.ind.filter(i=>i.k===k).map(i=>i.s))]; let s=0,w=0,n=0;
   subs.forEach(sb=>{const a=agg(D.ind.filter(i=>i.s===sb),y); if(!a) return; const ww=D.subw[sb]||1; s+=a.v*ww; w+=ww; n+=a.n;}); return w?{v:s/w,n}:null; }
@@ -311,7 +349,7 @@ function renderList(){ const items=filtered(); $('count').textContent=`${items.l
 const NS='http://www.w3.org/2000/svg';
 const sv=(t,a,txt)=>{const e=document.createElementNS(NS,t); for(const k in a) e.setAttribute(k,a[k]); if(txt!==undefined) e.textContent=txt; return e;};
 const tip=(e,t)=>{e.append(sv('title',{},t)); return e;};
-const VIEWS=[['list','지표 목록'],['compare','연도별 비교'],['analysis','영역 분석'],['solution','AI 분석 솔루션']];
+const VIEWS=[['list','지표 목록'],['compare','연도별 비교'],['analysis','영역 분석'],['solution','AI 분석 솔루션'],['input','데이터 입력']];
 function renderViews(){ $('views').replaceChildren(...VIEWS.map(([k,n])=>el('button',{class:'seg','aria-pressed':String(st.view===k),text:n,onclick:()=>{st.view=k;render();}})));
   VIEWS.forEach(([k])=>{$('v-'+k).style.display=st.view===k?'flex':'none';}); }
 const scoreOf=(a,y)=>a==='ALL'?allScore(y):areaScore(a,y);
@@ -450,7 +488,54 @@ function renderSolution(){ const list=SOL.filter(x=>st.area==='ALL'||x.a.include
       el('div',{class:'lbl',text:'담당'}),el('p',{text:x.dp}),
       el('div',{class:'lbl',text:'관련 지표 (누르면 해당 지표로 이동)'}),el('div',{class:'rel'},...x.r.map(c=>el('button',{text:c+' '+IND[c].n,onclick:()=>goInd(c)}))))); });
   box.replaceChildren(...out); }
-function render(){ renderYears(); renderAreas(); renderTiles(); renderViews(); renderFilters(); renderList(); renderCompare(); renderAnalysis(); renderSolution(); }
+
+/* ---------- 데이터 입력, 암호화 ---------- */
+const enc=new TextEncoder(), dec=new TextDecoder();
+const toB=u=>{let t=''; u.forEach(b=>t+=String.fromCharCode(b)); return btoa(t);};
+const fromB=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+async function keyOf(pw,salt){ const km=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:600000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']); }
+async function encryptData(pw,obj){ const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12)); const k=await keyOf(pw,salt);
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,enc.encode(JSON.stringify(obj)))); return {v:1,kdf:'PBKDF2-SHA256-600000',salt:toB(salt),iv:toB(iv),ct:toB(ct)}; }
+async function decryptData(pw,f){ const k=await keyOf(pw,fromB(f.salt)); const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:fromB(f.iv)},k,fromB(f.ct)); return JSON.parse(dec.decode(pt)); }
+function saveFile(name,text){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'application/json'})); a.download=name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
+const cleanUser=()=>{ const o={}; for(const c in st.user){ if(!IND[c]) continue; const e={}; for(const k in st.user[c]){ const v=st.user[c][k]; if(k==='w'){ if(typeof v==='number') e.w=v; } else if(v&&Object.keys(v).length) e[k]=v; } if(Object.keys(e).length) o[c]=e; } return o; };
+const countUser=o=>{ let n=0; for(const c in o) for(const k in o[c]) n+=k==='w'?1:Object.keys(o[c][k]).length; return n; };
+function validUser(o){ if(!o||typeof o!=='object'||Array.isArray(o)) return null; const r={}; for(const c in o){ if(!IND[c]||typeof o[c]!=='object') continue; const e={}; for(const k in o[c]){ const v=o[c][k];
+    if(k==='w'){ if(typeof v==='number'&&v>=0) e.w=v; } else if(/^20\d\d$/.test(k)&&v&&typeof v==='object'){ const z={}; ['a','t'].forEach(q=>{ if(typeof v[q]==='number'&&isFinite(v[q])) z[q]=v[q]; }); if(Object.keys(z).length) e[k]=z; } } if(Object.keys(e).length) r[c]=e; } return r; }
+function renderLock(){ const b=$('lock'); b.textContent=st.secure?'정밀 버전 보는 중 · 잠그기':'정밀 버전'; b.classList.toggle('on',!!st.secure); }
+$('lock').addEventListener('click',()=>{ if(st.secure){ st.secure=null; render(); return; } $('msg-open').textContent=''; $('pw-open').value=''; $('dlg-open').showModal(); });
+$('cancel-open').addEventListener('click',()=>$('dlg-open').close());
+$('cancel-enc').addEventListener('click',()=>$('dlg-enc').close());
+$('f-open').addEventListener('submit',async e=>{ e.preventDefault(); const m=$('msg-open'); m.className='msg'; m.textContent='확인 중입니다.';
+  let f; try{ const r=await fetch('secure.json?t='+Date.now(),{cache:'no-store'}); if(!r.ok) throw 0; f=await r.json(); }catch(x){ m.textContent='아직 암호화 파일(secure.json)이 올라와 있지 않습니다. 데이터 입력 화면에서 만들어 저장소에 올리면 열립니다.'; return; }
+  try{ const o=validUser(await decryptData($('pw-open').value,f)); st.secure=o||{}; $('pw-open').value=''; $('dlg-open').close(); render(); }catch(x){ m.textContent='비밀번호가 맞지 않습니다.'; } });
+$('f-enc').addEventListener('submit',async e=>{ e.preventDefault(); const m=$('msg-enc'); m.className='msg'; const a=$('pw-enc1').value,b=$('pw-enc2').value;
+  if(a.length<12){ m.textContent='비밀번호는 12자 이상이어야 합니다.'; return; } if(a!==b){ m.textContent='두 비밀번호가 다릅니다.'; return; }
+  const o=cleanUser(); if(!countUser(o)){ m.textContent='입력된 값이 없습니다. 먼저 실적이나 목표를 입력하세요.'; return; }
+  try{ const f=await encryptData(a,o); saveFile('secure.json',JSON.stringify(f)); $('pw-enc1').value=''; $('pw-enc2').value=''; m.className='msg ok'; m.textContent=`값 ${countUser(o)}개를 암호화해 secure.json으로 저장했습니다.`; }catch(x){ m.textContent='암호화하지 못했습니다. 최신 브라우저에서 https 주소로 열어 다시 시도하세요.'; } });
+function renderInput(){ const y=st.year, box=$('v-input'); const all=scope(); const items=all.filter(i=>!st.onlyEmpty||!(i.p&&i.p.v[y]!==undefined&&i.p.match!=='참고'));
+  const o=cleanUser(), n=countUser(o);
+  const fileIn=el('input',{type:'file',accept:'application/json,.json',id:'file-in',style:'display:none',onchange:async e=>{ const f=e.target.files[0]; if(!f) return; let ok=null; try{ ok=validUser(JSON.parse(await f.text())); }catch(x){} const m=$('msg-in');
+      if(!ok||!Object.keys(ok).length){ m.className='msg'; m.textContent='읽을 수 있는 입력값이 없습니다. "입력값 파일로 저장"으로 만든 JSON 파일을 선택하세요.'; return; }
+      for(const c in ok){ st.user[c]=Object.assign({},st.user[c]||{}); for(const k in ok[c]) st.user[c][k]=k==='w'?ok[c][k]:Object.assign({},st.user[c][k]||{},ok[c][k]); } save(); render(); const m2=$('msg-in'); m2.className='msg ok'; m2.textContent=`파일에서 지표 ${Object.keys(ok).length}개의 값을 불러왔습니다.`; }});
+  const head=el('div',{class:'panel',id:'input-head'},el('h2',{text:'데이터 입력'}),
+    el('p',{class:'cap',text:`${y}년 실적과 목표를 지표별로 입력합니다. 대학알리미 공시값이 있는 칸은 회색 글씨로 보이며, 값을 넣으면 공시값 대신 쓰입니다. 입력값은 이 브라우저에 저장됩니다.`}),el('p',{class:'cap',id:'in-count',text:`현재 입력된 값 ${n}개`}),
+    el('div',{class:'tools'},
+      el('button',{class:'chip','aria-pressed':String(st.onlyEmpty),text:'공시값 없는 지표만',onclick:()=>{st.onlyEmpty=!st.onlyEmpty;renderInput();}}),
+      el('button',{class:'btn',text:'입력값 파일로 저장',onclick:()=>{ const m=$('msg-in'); if(!n){ m.className='msg'; m.textContent='입력된 값이 없습니다.'; return; } saveFile('ghu-kpi-input.json',JSON.stringify(cleanUser(),null,1)); m.className='msg ok'; m.textContent='ghu-kpi-input.json으로 저장했습니다. 이 파일은 암호화되지 않았으니 저장소에 올리지 마세요.'; }}),
+      el('button',{class:'btn',text:'파일 불러오기',onclick:()=>fileIn.click()}),fileIn,
+      el('button',{class:'btn pri',text:'암호화 파일 만들기',onclick:()=>{ $('msg-enc').textContent=''; $('dlg-enc').showModal(); }})),
+    el('p',{class:'msg',id:'msg-in',style:'margin-top:10px'}),
+    st.secure?el('p',{class:'note',text:'지금은 정밀 버전을 보는 중입니다. 화면의 수치에는 암호화 파일의 값이 우선 적용되고, 여기서 입력하는 값은 이 브라우저에만 저장됩니다.'}):null);
+  const rows=[]; let sub='';
+  items.forEach(i=>{ if(i.s!==sub){ sub=i.s; rows.push(el('tr',{class:'sec'},el('td',{colspan:'5',text:`${i.s} ${D.sub[i.s]}`}))); }
+    const u=unitOf(i), loc=(st.user[i.c]||{})[y]||{}, a=i.p&&i.p.v[y]!==undefined?fmt(i.p.v[y],u)+' ('+i.p.match+')':'', py=i.p&&i.p.match!=='참고'&&i.p.v[String(+y-1)]!==undefined?fmt(i.p.v[String(+y-1)],u)+' (전년도)':'';
+    const mk=(k,ph,lab)=>el('input',{type:'number',step:'any',inputmode:'decimal',id:`in-${k}-${y}-${i.c}`,'aria-label':`${i.c} ${i.n} ${lab}`,value:loc[k]===undefined?'':loc[k],placeholder:ph,onchange:e=>{ setU(i.c,y,k,e.target.value===''?'':parseFloat(e.target.value)); renderAreas(); renderTiles(); $('in-count').textContent=`현재 입력된 값 ${countUser(cleanUser())}개`; }});
+    rows.push(el('tr',null,el('td',null,el('b',{text:i.c+' '}),i.n),el('td',{text:i.cd,style:'text-align:left'}),el('td',{text:u||'-'}),el('td',null,mk('a',a,'실적')),el('td',null,mk('t',py,'목표')))); });
+  const tbl=el('div',{class:'panel'},items.length?el('div',{class:'tw'},el('table',{class:'t in'},el('thead',null,el('tr',null,el('th',{text:`지표 (${items.length}개)`}),el('th',{text:'주 관리부서',style:'text-align:left'}),el('th',{text:'단위'}),el('th',{text:y+'년 실적'}),el('th',{text:y+'년 목표'}))),el('tbody',null,...rows))):el('p',{class:'cap',text:'표시할 지표가 없습니다.'}));
+  box.replaceChildren(head,tbl); }
+function render(){ renderLock(); renderYears(); renderAreas(); renderTiles(); renderViews(); renderFilters(); renderList(); renderCompare(); renderAnalysis(); renderSolution(); renderInput(); }
 $('f-dept').addEventListener('change',e=>{st.dept=e.target.value;renderList();});
 $('f-pub').addEventListener('click',()=>{st.pub=!st.pub;render();});
 $('f-q').addEventListener('input',e=>{st.q=e.target.value;renderList();});
