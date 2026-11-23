@@ -9,7 +9,7 @@
 :root{
   --bg:#f5f5f7; --surface:#ffffff; --surface-2:#f5f5f7; --ink:#1d1d1f; --ink-2:#6e6e73; --muted:#86868b;
   --line:#e8e8ed; --accent:#0071e3; --accent-soft:#eaf3fe; --track:#e8e8ed; --bar:rgba(245,245,247,.78);
-  --good:#34c759; --warn:#ff9f0a; --crit:#ff3b30; --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);
+  --good:#34c759; --warn:#ff9f0a; --crit:#ff3b30; --good-ink:#1d7a34; --s1:#2a78d6; --s2:#eb6834; --y1:#86b6ef; --y2:#2a78d6; --y3:#104281; --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);
   --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",sans-serif;
   --body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",sans-serif;
 }
@@ -17,13 +17,13 @@
   :root:not([data-theme="light"]){
     --bg:#000000; --surface:#1c1c1e; --surface-2:#2c2c2e; --ink:#f5f5f7; --ink-2:#a1a1a6; --muted:#8e8e93;
     --line:#38383a; --accent:#2997ff; --accent-soft:#10283f; --track:#3a3a3c; --bar:rgba(0,0,0,.72);
-    --good:#30d158; --warn:#ff9f0a; --crit:#ff453a; --shadow:none; color-scheme:dark;
+    --good:#30d158; --warn:#ff9f0a; --crit:#ff453a; --good-ink:#30d158; --s1:#3987e5; --s2:#d95926; --y1:#9ec5f4; --y2:#3987e5; --y3:#184f95; --shadow:none; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#000000; --surface:#1c1c1e; --surface-2:#2c2c2e; --ink:#f5f5f7; --ink-2:#a1a1a6; --muted:#8e8e93;
   --line:#38383a; --accent:#2997ff; --accent-soft:#10283f; --track:#3a3a3c; --bar:rgba(0,0,0,.72);
-  --good:#30d158; --warn:#ff9f0a; --crit:#ff453a; --shadow:none; color-scheme:dark;
+  --good:#30d158; --warn:#ff9f0a; --crit:#ff453a; --good-ink:#30d158; --s1:#3987e5; --s2:#d95926; --y1:#9ec5f4; --y2:#3987e5; --y3:#184f95; --shadow:none; color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -124,6 +124,25 @@ table.t td{font-weight:600}
 footer{color:var(--muted);font-size:12px;max-width:80ch;border-top:1px solid var(--line);padding-top:18px}
 .linkbtn{background:none;border:0;padding:0;color:var(--accent)}
 .linkbtn:hover{text-decoration:underline}
+
+.views{display:flex;justify-content:center}
+#views{display:inline-flex;background:var(--track);border-radius:11px;padding:3px;flex-wrap:wrap}
+#views .seg{padding:8px 22px;font-size:14px;border-radius:9px}
+.panel{background:var(--surface);border-radius:18px;padding:22px;box-shadow:var(--shadow);min-width:0}
+.panel h2{margin:0 0 4px;font-family:var(--display);font-size:21px;font-weight:700;letter-spacing:-.02em}
+.panel .cap{color:var(--ink-2);font-size:13px;margin:0 0 14px;max-width:70ch}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:12px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font-family:var(--body);fill:var(--ink-2);font-size:11px}
+.chart .ax{fill:var(--ink);font-size:12px;font-weight:600}
+.chart .vl{fill:var(--ink);font-size:10.5px;font-weight:600}
+.lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--ink-2);margin-bottom:8px}
+.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.up{color:var(--good-ink);font-weight:600} .down{color:var(--crit);font-weight:600} .flat{color:var(--ink-2)}
+.ins{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.ins b{font-weight:600}
+.acard h3{margin:0 0 10px;font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:-.02em;display:flex;gap:8px;align-items:baseline}
+.acard h3 span{color:var(--accent)}
 @media (max-width:860px){
   header.top{padding:32px 0 4px}
   .row{grid-template-columns:1fr auto;grid-template-areas:"c g" "n n" "dp dp" "v v" "m m";gap:3px 8px;padding:14px 18px}
@@ -148,14 +167,19 @@ footer{color:var(--muted);font-size:12px;max-width:80ch;border-top:1px solid var
   </header>
   <div class="areas" id="areas"></div>
   <div class="tiles" id="tiles"></div>
+  <div class="views"><span id="views" role="group" aria-label="보기 전환"></span></div>
+  <div id="v-list" style="display:flex;flex-direction:column;gap:20px">
   <div class="filters">
-    <label for="f-dept">주 관리부서 <select id="f-dept"></select></label>
-    <span role="group" aria-label="진단등급" id="f-grade" style="display:flex;gap:6px;flex-wrap:wrap"></span>
-    <button class="chip" id="f-pub" aria-pressed="false">공시 수치 있는 지표만</button>
-    <label for="f-q">검색 <input type="search" id="f-q" placeholder="지표명, 코드"></label>
-    <span class="count" id="count"></span>
+      <label for="f-dept">주 관리부서 <select id="f-dept"></select></label>
+      <span role="group" aria-label="진단등급" id="f-grade" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+      <button class="chip" id="f-pub" aria-pressed="false">공시 수치 있는 지표만</button>
+      <label for="f-q">검색 <input type="search" id="f-q" placeholder="지표명, 코드"></label>
+      <span class="count" id="count"></span>
+    </div>
+    <div id="list" style="display:flex;flex-direction:column;gap:14px"></div>
   </div>
-  <div id="list" style="display:flex;flex-direction:column;gap:14px"></div>
+  <div id="v-compare" style="display:flex;flex-direction:column;gap:12px"></div>
+  <div id="v-analysis" style="display:flex;flex-direction:column;gap:12px"></div>
   <footer>
     <p><b>자료</b> 지표 구조, 산출식, 주 관리부서는 영역별 세부지표 정의서 6종에서, 검토의견과 진단등급은 「대학 성과지표체계 점검표」(2026-10-21)에서 가져왔습니다. 실적 수치는 대학알리미 광주보건대학교[본교] 공시(2024, 2025, 2026년 공시, 2026-11-23 조회)입니다.</p>
     <p><b>달성률</b> 목표를 직접 입력하지 않은 지표는 전년도 공시값을 임시 목표로 씁니다. 낮을수록 좋은 지표는 목표 ÷ 실적으로 계산하고, 합산할 때 지표별 달성률은 130%까지만 반영합니다. Sub KPI 점수는 가중 평균이며 가중치는 S1만 정의서 예시값(0.5, 0.3, 0.2 등)이고 나머지는 균등입니다. 입력한 실적, 목표, 가중치는 이 브라우저에만 저장됩니다. <button class="linkbtn" id="reset">입력값 모두 지우기</button></p>
@@ -168,7 +192,7 @@ const D=window.KPI_DATA, YEARS=['2024','2025','2026'];
 const AREA=Object.fromEntries(D.areas);
 const G={'○':['g-o','즉시 산출 가능'],'△':['g-t','조건부 산출 가능'],'×':['g-x','산출 불가, 재설계 필요']};
 const JL=['정책적 필요성','행정 효율성','시스템 구현 가능성'];
-let st={area:'ALL',year:'2025',dept:'',grades:[],pub:false,q:'',open:null,user:{}};
+let st={view:'list',area:'ALL',year:'2025',dept:'',grades:[],pub:false,q:'',open:null,user:{}};
 try{const s=JSON.parse(localStorage.getItem('ghu-kpi-v1')||'null'); if(s&&s.user) st.user=s.user;}catch(e){}
 const h=location.hash.replace('#area-','').toUpperCase(); if(AREA[h]) st.area=h;
 const save=()=>{try{localStorage.setItem('ghu-kpi-v1',JSON.stringify({user:st.user}));}catch(e){}};
@@ -269,7 +293,72 @@ function renderList(){ const items=filtered(); $('count').textContent=`${items.l
       items.filter(i=>i.s===s).forEach(i=>sec.append(...row(i))); });
     out.push(sec); });
   box.replaceChildren(...out); }
-function render(){ renderYears(); renderAreas(); renderTiles(); renderFilters(); renderList(); }
+
+const NS='http://www.w3.org/2000/svg';
+const sv=(t,a,txt)=>{const e=document.createElementNS(NS,t); for(const k in a) e.setAttribute(k,a[k]); if(txt!==undefined) e.textContent=txt; return e;};
+const tip=(e,t)=>{e.append(sv('title',{},t)); return e;};
+const VIEWS=[['list','지표 목록'],['compare','연도별 비교'],['analysis','영역 분석']];
+function renderViews(){ $('views').replaceChildren(...VIEWS.map(([k,n])=>el('button',{class:'seg','aria-pressed':String(st.view===k),text:n,onclick:()=>{st.view=k;render();}})));
+  VIEWS.forEach(([k])=>{$('v-'+k).style.display=st.view===k?'flex':'none';}); }
+const scoreOf=(a,y)=>a==='ALL'?allScore(y):areaScore(a,y);
+function yearBars(){ const groups=st.area==='ALL'?D.areas.map(([a,n])=>({k:a,n:a+' '+n,f:y=>areaScore(a,y)})):Object.keys(D.kpi).filter(k=>k[0]===st.area).map(k=>({k,n:'KPI-'+k,f:y=>kpiScore(k,y)}));
+  const W=720,H=300,L=40,R=10,T=18,B=44, pw=W-L-R, ph=H-T-B, mx=130; const Y=v=>T+ph-(Math.min(v,mx)/mx)*ph;
+  const svg=sv('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'연도별 목표 대비 달성률 막대 그래프'});
+  [0,50,100].forEach(v=>{svg.append(sv('line',{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:v===0?'var(--muted)':'var(--line)','stroke-width':1,'stroke-dasharray':v===100?'4 3':''}),sv('text',{x:L-6,y:Y(v)+4,'text-anchor':'end'},v+'%'));});
+  const gw=pw/groups.length, bw=Math.min(26,(gw-18)/3);
+  groups.forEach((g,gi)=>{ const cx=L+gw*gi+gw/2; svg.append(sv('text',{x:cx,y:H-B+18,'text-anchor':'middle',class:'ax'},g.n));
+    YEARS.forEach((y,yi)=>{ const r=g.f(y); const x=cx+(yi-1)*(bw+2)-bw/2;
+      if(!r){ svg.append(tip(sv('text',{x:x+bw/2,y:Y(0)-5,'text-anchor':'middle'},'-'),`${g.n} ${y}년: 계산 가능한 지표 없음`)); return; }
+      const yy=Y(r.v), h=Y(0)-yy; svg.append(tip(sv('path',{d:`M${x},${Y(0)} V${yy+4} Q${x},${yy} ${x+4},${yy} H${x+bw-4} Q${x+bw},${yy} ${x+bw},${yy+4} V${Y(0)} Z`,fill:`var(--y${yi+1})`}),`${g.n} ${y}년 달성률 ${nf(r.v,1)}% (지표 ${r.n}개)`));
+      if(y===st.year) svg.append(sv('text',{x:x+bw/2,y:yy-5,'text-anchor':'middle',class:'vl'},nf(r.v,0))); }); });
+  const tb=el('table',{class:'t'},el('thead',null,el('tr',null,el('th',{text:st.area==='ALL'?'영역':'핵심 KPI'}),...YEARS.map(y=>el('th',{text:y+'년'})))),
+    el('tbody',null,...groups.map(g=>el('tr',null,el('td',{text:g.n}),...YEARS.map(y=>{const r=g.f(y); return el('td',{text:r?`${nf(r.v,1)}% (${r.n}개)`:'-'});})))));
+  return el('div',{class:'panel',id:'chart-years'},el('h2',{text:'연도별 목표 대비 달성률'}),el('p',{class:'cap',text:'목표를 입력하지 않은 지표는 전년도 공시값이 목표이므로, 100%를 넘으면 전년보다 나아졌다는 뜻입니다. 숫자 라벨은 선택한 공시연도 값이고, 2024년은 전년도 자료가 있는 지표가 1개뿐입니다.'}),
+    el('div',{class:'lg'},...YEARS.map((y,i)=>el('span',null,el('i',{style:`background:var(--y${i+1})`}),y+'년 공시'))),el('div',{class:'chart'},svg),el('div',{class:'tw',style:'margin-top:12px'},tb)); }
+function yoyTable(){ const items=scope().filter(i=>i.p); const y=st.year, py=String(+y-1);
+  const rows=items.map(i=>{ const a=i.p.v[y], b=i.p.v[py]; let cell=el('td',{class:'flat',text:'-'});
+    if(a!==undefined&&b!==undefined){ const d=a-b; const pct=b!==0?d/Math.abs(b)*100:null; const better=d===0?0:((d>0)!==!!i.p.lower?1:-1);
+      const lab=i.p.match==='참고'?(d>0?'증가':d<0?'감소':'동일'):(better>0?'개선':better<0?'악화':'동일');
+      cell=el('td',{class:i.p.match==='참고'||better===0?'flat':better>0?'up':'down',text:`${d>0?'▲':d<0?'▼':'='} ${lab}${pct!==null&&d!==0?' '+nf(Math.abs(pct),1)+'%':''}`}); }
+    return el('tr',null,el('td',null,el('b',{text:i.c+' '}),i.p.label+(i.p.unit?` (${i.p.unit})`:''),' ',el('span',{class:'tag pub',text:i.p.match})),...YEARS.map(yy=>el('td',{text:i.p.v[yy]!==undefined?fmt(i.p.v[yy],i.p.unit):'-',title:i.p.v[yy]!==undefined?nf(i.p.v[yy],2)+i.p.unit:'공시 없음'})),cell); });
+  return el('div',{class:'panel',id:'table-yoy'},el('h2',{text:'공시 수치 3개 연도 비교'}),el('p',{class:'cap',text:`대학알리미 공시가 연결된 지표 ${items.length}개입니다. 마지막 열은 ${y}년 공시를 ${py}년 공시와 비교한 것이며, 낮을수록 좋은 지표는 감소를 개선으로 봅니다. 참고값은 증감만 표시합니다.`}),
+    items.length?el('div',{class:'tw'},el('table',{class:'t'},el('thead',null,el('tr',null,el('th',{text:'지표'}),...YEARS.map(yy=>el('th',{text:yy+'년'})),el('th',{text:'전년 대비'}))),el('tbody',null,...rows))):el('p',{class:'cap',text:'이 영역에는 공시가 연결된 지표가 없습니다.'})); }
+function renderCompare(){ $('v-compare').replaceChildren(yearBars(),yoyTable()); }
+function radar(title,cap,series,id,MX,rings){ MX=MX||100; rings=rings||[25,50,75,100]; const W=380,H=330,cx=W/2,cy=168,R=112,n=D.areas.length; const pt=(k,v)=>{const a=-Math.PI/2+k*2*Math.PI/n; return [cx+Math.cos(a)*R*v/MX,cy+Math.sin(a)*R*v/MX];};
+  const svg=sv('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':title});
+  rings.forEach(v=>{const em=MX!==100&&v===100; svg.append(sv('polygon',{points:D.areas.map((_,k)=>pt(k,v).join(',')).join(' '),fill:'none',stroke:em?'var(--muted)':'var(--line)','stroke-width':1,'stroke-dasharray':em?'4 3':''})); svg.append(sv('text',{x:cx+4,y:cy-R*v/MX+3,style:'font-size:9.5px'},String(v)));});
+  D.areas.forEach(([a,nm],k)=>{const [x,y]=pt(k,MX); svg.append(sv('line',{x1:cx,y1:cy,x2:x,y2:y,stroke:'var(--line)','stroke-width':1})); const [lx,ly]=pt(k,MX*1.22); svg.append(sv('text',{x:lx,y:ly+4,'text-anchor':'middle',class:'ax',style:st.area===a?'fill:var(--accent)':''},a+' '+nm));});
+  series.forEach(se=>{ const vals=D.areas.map(([a])=>se.f(a)); const ok=vals.every(v=>v!==null);
+    if(ok) svg.append(sv('polygon',{points:vals.map((v,k)=>pt(k,Math.min(v,MX)).join(',')).join(' '),fill:se.color,'fill-opacity':.14,stroke:se.color,'stroke-width':2,'stroke-linejoin':'round'}));
+    else { let seg=[]; const flush=()=>{ if(seg.length>1) svg.append(sv('polyline',{points:seg.map(q=>q.join(',')).join(' '),fill:'none',stroke:se.color,'stroke-width':2,'stroke-linejoin':'round'})); seg=[]; };
+      [...vals.keys(),0].forEach((k,idx)=>{ const v=vals[k]; if(v===null){flush();return;} if(idx===vals.length&&seg.length===0) return; seg.push(pt(k,Math.min(v,MX))); }); flush(); }
+    vals.forEach((v,k)=>{ if(v===null) return; const [x,y]=pt(k,Math.min(v,MX)); svg.append(tip(sv('circle',{cx:x,cy:y,r:4.5,fill:se.color,stroke:'var(--surface)','stroke-width':2}),`${D.areas[k][0]} ${D.areas[k][1]} · ${se.name}: ${nf(v,1)}${se.unit||'%'}`)); }); });
+  const tb=el('table',{class:'t'},el('thead',null,el('tr',null,el('th',{text:'영역'}),...series.map(se=>el('th',{text:se.name})))),el('tbody',null,...D.areas.map(([a,nm])=>el('tr',null,el('td',{text:a+' '+nm}),...series.map(se=>{const v=se.f(a); return el('td',{text:v===null?'-':nf(v,1)+'%'});})))));
+  return el('div',{class:'panel',id},el('h2',{text:title}),el('p',{class:'cap',text:cap}),el('div',{class:'lg'},...series.map(se=>el('span',null,el('i',{style:`background:${se.color}`}),se.name))),el('div',{class:'chart',style:'max-width:440px;margin:0 auto'},svg),el('div',{class:'tw',style:'margin-top:8px'},tb)); }
+function insight(a){ const y=st.year, items=D.ind.filter(i=>i.c[0]===a), n=items.length; const c={'○':0,'△':0,'×':0}; items.forEach(i=>c[i.g]++);
+  const dc={}; items.forEach(i=>dc[i.cd]=(dc[i.cd]||0)+1); const dl=Object.entries(dc).sort((x,z)=>z[1]-x[1]);
+  const pubs=items.filter(i=>i.p), rated=items.map(i=>[i,rate(i,y)]).filter(x=>x[1]!==null).sort((x,z)=>z[1]-x[1]); const sc=areaScore(a,y);
+  const xs=items.filter(i=>i.g==='×'), dup=items.filter(i=>i.j.some(o=>o.length>1)), need=items.filter(i=>!actual(i,y));
+  const li=(...k)=>el('li',null,...k); const L=[];
+  L.push(li(el('b',{text:`지표 ${n}개`}),` 중 즉시 산출 가능(○) ${c['○']}개(${nf(c['○']/n*100,0)}%), 조건부(△) ${c['△']}개, 산출 불가(×) ${c['×']}개입니다.`));
+  L.push(li(el('b',{text:'주 관리부서'}),`는 ${dl.length}곳이며 ${dl.slice(0,2).map(d=>`${d[0]} ${d[1]}개`).join(', ')} 순으로 많습니다.`));
+  L.push(li(el('b',{text:`공시 연결 ${pubs.length}개`}),pubs.length?`, ${y}년 실적이 비어 있는 지표는 ${need.length}개입니다.`:'. 대응하는 대학알리미 공시 항목이 없어 실적은 모두 교내 자료가 필요합니다.'));
+  if(sc){ const up=rated.filter(x=>x[1]>=100).length; L.push(li(el('b',{text:`${y}년 달성률 ${nf(sc.v,1)}%`}),` (지표 ${sc.n}개 기준). 목표 이상 ${up}개, 미달 ${rated.length-up}개입니다.`));
+    const hi=rated[0], lo=rated[rated.length-1]; L.push(li(el('b',{text:'가장 높은 지표'}),`는 ${hi[0].c} ${hi[0].n}(${nf(hi[1],1)}%)`,rated.length>1?`, 가장 낮은 지표는 ${lo[0].c} ${lo[0].n}(${nf(lo[1],1)}%)입니다.`:'입니다.')); }
+  else L.push(li(el('b',{text:`${y}년 달성률`}),'은 실적과 목표가 모두 있는 지표가 없어 계산되지 않습니다.'));
+  if(xs.length) L.push(li(el('b',{text:'재설계 대상'}),`: ${xs.map(i=>i.c+' '+i.n).join(', ')}`));
+  if(dup.length) L.push(li(el('b',{text:`판단 유형 중복 ${dup.length}개`}),`: 점검표에 시스템 구현 가능성이 두 가지로 적힌 지표입니다(${dup.map(i=>i.c).join(', ')}).`));
+  return el('div',{class:'panel acard',id:'analysis-'+a},el('h3',null,el('span',{text:a}),AREA[a]+' 영역'),el('ul',{class:'ins'},...L)); }
+function renderAnalysis(){ const y=st.year; const by=a=>D.ind.filter(i=>i.c[0]===a);
+  const r1=radar('영역별 지표 준비도','각 영역에서 바로 산출할 수 있는 지표의 비율과, 선택한 연도의 실적이 확보된 지표의 비율입니다. 바깥쪽일수록 준비가 되어 있습니다.',[
+    {name:'즉시 산출 가능(○) 비율',color:'var(--s1)',f:a=>by(a).filter(i=>i.g==='○').length/by(a).length*100},
+    {name:`${y}년 실적 확보율`,color:'var(--s2)',f:a=>by(a).filter(i=>actual(i,y)).length/by(a).length*100}],'radar-ready');
+  const py=String(+y-1); const ys=y==='2024'?['2024']:[py,y];
+  const r2=radar('영역별 목표 대비 달성률','점선(100)이 목표 달성선이고 바깥으로 나갈수록 목표를 넘은 것입니다. 130을 넘는 값은 130에 맞춰 그립니다. 달성률을 계산할 수 없는 영역은 점이 없습니다.',
+    ys.map((yy,k)=>({name:`${yy}년 달성률`,color:ys.length===1||k===1?'var(--s1)':'var(--s2)',f:a=>{const r=areaScore(a,yy); return r?r.v:null;}})),'radar-score',130,[50,100,130]);
+  const cards=(st.area==='ALL'?D.areas.map(x=>x[0]):[st.area]).map(insight);
+  $('v-analysis').replaceChildren(el('div',{class:'grid2'},r1,r2),el('div',{class:'grid2'},...cards)); }
+function render(){ renderYears(); renderAreas(); renderTiles(); renderViews(); renderFilters(); renderList(); renderCompare(); renderAnalysis(); }
 $('f-dept').addEventListener('change',e=>{st.dept=e.target.value;renderList();});
 $('f-pub').addEventListener('click',()=>{st.pub=!st.pub;render();});
 $('f-q').addEventListener('input',e=>{st.q=e.target.value;renderList();});
