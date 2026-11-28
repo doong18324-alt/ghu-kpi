@@ -188,6 +188,12 @@ table.in tr.sec td{background:var(--surface-2);font-weight:600;font-size:12.5px;
 .submit label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--ink-2)}
 .submit input{background:var(--surface-2);border:1px solid transparent;border-radius:10px;padding:9px 12px;width:200px}
 .btn.big{padding:11px 28px;font-size:15px}
+.layers{display:flex;flex-direction:column;gap:6px;margin:0 0 14px}.layer{background:var(--surface-2);border-radius:14px;padding:12px 16px}.layer p{margin:4px 0 0;font-size:13px;color:var(--ink-2)}
+.arrow{text-align:center;color:var(--muted);font-size:13px;font-weight:600}
+.chain{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}.chain .node{flex:1 1 200px;background:var(--surface-2);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}.chain .arrow{align-self:center;font-size:20px}
+.nv{display:flex;justify-content:space-between;gap:8px;font-size:13px}.nv span{font-weight:700;white-space:nowrap}
+.pen input{width:90px}.penres{margin-top:12px;font-size:14px}.penres table{margin-top:8px}
+table.t.sys td,table.t.sys th{text-align:left;vertical-align:top}
 .donebox{background:color-mix(in srgb,var(--good) 12%,var(--surface));border-radius:14px;padding:14px 16px;font-size:14px}
 .donebox b{display:block;font-size:16px;margin-bottom:4px}
 .confl{border-left:4px solid var(--crit);background:color-mix(in srgb,var(--crit) 6%,var(--surface));border-radius:0 12px 12px 0;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
@@ -258,16 +264,18 @@ body{font-weight:400;letter-spacing:-.005em}
     </div>
     <div id="list" style="display:flex;flex-direction:column;gap:14px"></div>
   </div>
+  <div id="v-system" style="display:flex;flex-direction:column;gap:12px"></div>
   <div id="v-compare" style="display:flex;flex-direction:column;gap:12px"></div>
   <div id="v-analysis" style="display:flex;flex-direction:column;gap:12px"></div>
   <div id="v-solution" style="display:flex;flex-direction:column;gap:12px"></div>
   <div id="v-input" style="display:flex;flex-direction:column;gap:12px"></div>
   <div id="v-admin" style="display:flex;flex-direction:column;gap:12px"></div>
   <footer>
-    <p><b>자료</b> 지표 구조, 산출식, 주 관리부서는 영역별 세부지표 정의서 6종에서, 검토의견과 진단등급은 「대학 성과지표체계 점검표」(2026-10-21)에서 가져왔습니다. 실적 수치는 대학알리미 광주보건대학교[본교] 공시(2024, 2025, 2026년 공시, 2026-11-23 조회)입니다.</p>
-    <p><b>달성률</b> 목표를 직접 입력하지 않은 지표는 전년도 공시값을 임시 목표로 씁니다. 낮을수록 좋은 지표는 목표 ÷ 실적으로 계산하고, 합산할 때 지표별 달성률은 130%까지만 반영합니다. Sub KPI 점수는 가중 평균이며 가중치는 S1만 정의서 예시값(0.5, 0.3, 0.2 등)이고 나머지는 균등입니다. 입력한 실적, 목표, 가중치는 이 브라우저에만 저장됩니다. 부서는 데이터 입력 화면에서 제출 파일을 만들어 담당자에게 보내고, 담당자는 관리자 화면에서 모아 정밀 버전에 반영합니다. <button class="linkbtn" id="reset">입력값 모두 지우기</button></p>
+    <p><b>자료</b> 지표 구조, 산출식, 주 관리부서는 영역별 세부지표 정의서 6종에서, 검토의견과 진단등급은 「대학 성과지표체계 점검표」(2026-10-21)에서 가져왔습니다. 실적 수치는 대학알리미 광주보건대학교[본교] 공시(2023~2026년 공시)이며, 공시 원본 파일(xlsx 272개)로 대조했습니다. 2024년 취업 현황만 화면 조회값입니다.</p>
+    <p><b>달성률</b> 목표를 직접 입력하지 않은 지표는 전년도 공시값을 임시 목표로 씁니다. 낮을수록 좋은 지표는 목표 ÷ 실적으로 계산하고, 합산할 때 지표별 달성률은 130%까지만 반영합니다. Sub KPI 점수는 가중 평균이며 가중치는 S1만 정의서 예시값(0.5, 0.3, 0.2 등)이고 나머지는 균등입니다. 입력한 실적, 목표, 가중치는 이 브라우저에만 저장됩니다. 부서가 데이터 입력 화면에서 등록을 누르면 값이 구글 스프레드시트에 저장되고, 담당자는 관리자 화면에서 시트 값을 불러와 조정한 뒤 정밀 버전에 반영합니다. <button class="linkbtn" id="reset">입력값 모두 지우기</button></p>
   </footer>
 </div>
+<script src="config.js"></script>
 <script src="data.js"></script>
 <script>
 (function(){
@@ -355,6 +363,7 @@ function detail(i){ const y=st.year, u=unitOf(i); const left=el('section'), righ
   if(i.n!==i.cn) left.append(el('p',{class:'small',text:'점검표 표기 지표명: '+i.cn}));
   right.append(el('h3',{text:'점검표 검토의견'}));
   const dl=el('dl',{class:'judge'}); i.j.forEach((o,k)=>{dl.append(el('dt',{text:JL[k]}),el('dd',{text:o.join(' / ')||'표기 없음'}));}); dl.append(el('dt',{text:'진단등급'}),el('dd',null,pill(i.g),' '+G[i.g][1])); right.append(dl);
+  if(FXW[i.c]) right.append(el('div',{class:'warnbox',text:FXW[i.c]}));
   if(i.j.some(o=>o.length>1)) right.append(el('div',{class:'warnbox',text:'점검표 원문에 판단 유형이 두 개 함께 적혀 있습니다. 하나로 확정이 필요합니다.'}));
   if(i.p){ right.append(el('h3',{text:'대학알리미 공시 수치'}));
     const ys=Object.keys(i.p.v).sort(); right.append(el('div',{class:'tw'},el('table',{class:'t'},el('thead',null,el('tr',null,el('th',{text:i.p.label+(i.p.unit?` (${i.p.unit})`:'')}),...ys.map(yy=>el('th',{text:yy+'년 공시'})))),
@@ -390,7 +399,7 @@ function renderList(){ const items=filtered(); $('count').textContent=`${items.l
 const NS='http://www.w3.org/2000/svg';
 const sv=(t,a,txt)=>{const e=document.createElementNS(NS,t); for(const k in a) e.setAttribute(k,a[k]); if(txt!==undefined) e.textContent=txt; return e;};
 const tip=(e,t)=>{e.append(sv('title',{},t)); return e;};
-const VIEWS=[['list','지표 목록'],['compare','연도별 비교'],['analysis','영역 분석'],['solution','AI 분석 솔루션'],['input','데이터 입력'],['admin','관리자']];
+const VIEWS=[['list','지표 목록'],['system','관리체계'],['compare','연도별 비교'],['analysis','영역 분석'],['solution','AI 분석 솔루션'],['input','데이터 입력'],['admin','관리자']];
 function renderViews(){ if(st.view==='admin'&&!st.secure) st.view='list'; const nc=st.secure?nConf():0; $('views').replaceChildren(...VIEWS.filter(([k])=>k!=='admin'||st.secure).map(([k,n])=>el('button',{class:'seg','aria-pressed':String(st.view===k),onclick:()=>{st.view=k;render();}},n,k==='admin'&&nc?el('span',{class:'badge',text:String(nc),title:`조정이 필요한 값 ${nc}건`}):null)));
   VIEWS.forEach(([k])=>{$('v-'+k).style.display=st.view===k?'flex':'none';}); }
 const scoreOf=(a,y)=>a==='ALL'?allScore(y):areaScore(a,y);
@@ -416,6 +425,54 @@ function yoyTable(){ const items=scope().filter(i=>i.p); const y=st.year, py=Str
     return el('tr',null,el('td',null,el('b',{text:i.c+' '}),i.p.label+(i.p.unit?` (${i.p.unit})`:''),' ',el('span',{class:'tag pub',text:i.p.match})),...YEARS.map(yy=>el('td',{text:i.p.v[yy]!==undefined?fmt(i.p.v[yy],i.p.unit):'-',title:i.p.v[yy]!==undefined?nf(i.p.v[yy],2)+i.p.unit:'공시 없음'})),cell); });
   return el('div',{class:'panel',id:'table-yoy'},el('h2',{text:'공시 수치 3개 연도 비교'}),el('p',{class:'cap',text:`대학알리미 공시가 연결된 지표 ${items.length}개입니다. 마지막 열은 ${y}년 공시를 ${py}년 공시와 비교한 것이며, 낮을수록 좋은 지표는 감소를 개선으로 봅니다. 참고값은 증감만 표시합니다.`}),
     items.length?el('div',{class:'tw'},el('table',{class:'t'},el('thead',null,el('tr',null,el('th',{text:'지표'}),...YEARS.map(yy=>el('th',{text:yy+'년'})),el('th',{text:'전년 대비'}))),el('tbody',null,...rows))):el('p',{class:'cap',text:'이 영역에는 공시가 연결된 지표가 없습니다.'})); }
+/* ---------- 관리체계: 「기존 영역별 성과지표 문제점」, 「성과 귀속형 KPI 관리체계 구축 방안」 ---------- */
+function renderSystem(){ const box=$('v-system'); const y=st.year;
+  const tbl=(head,rows)=>el('div',{class:'tw'},el('table',{class:'t sys'},el('thead',null,el('tr',null,...head.map(h=>el('th',{text:h})))),el('tbody',null,...rows.map(r=>el('tr',null,...r.map(c=>el('td',{text:c})))))));
+  const indBtn=c=>el('button',{class:'linkbtn',text:`${c} ${IND[c].n}`,onclick:()=>goInd(c)});
+  const val=c=>{ const i=IND[c], a=actual(i,y); if(!a) return '자료 없음'; const u=a.src==='입력'?unitOf(i):(i.p&&i.p.unit)||unitOf(i); const t=fmt(a.v,u); return /\d$/.test(t)&&u?t+(u==='%'?'%':' '+u):t; };
+  const p1=el('div',{class:'panel'},el('h2',{text:'기존 지표 체계의 문제'}),el('p',{class:'cap',text:'「기존 영역별 성과지표 문제점」 문서의 진단을 정리했습니다.'}),
+    tbl(['문제','내용'],[
+      ['BSC 4대 관점의 균형 상실','지표가 행정 부서의 업무 분장과 여건 지표에 쏠려 있습니다. 학생지원(S) 영역에 단순 만족도 설문 지표가 6~7개 몰려 있고, 행정 자동화나 부서 간 협업 같은 프로세스 혁신 지표는 없이 투입형 지표만 있습니다.'],
+      ['원인과 결과의 인과관계 단절','학습·성장 → 내부 프로세스 → 고객 만족 → 재무 성과로 이어져야 할 사슬이 끊겨 있습니다. 예를 들어 1인당 실험실습비 투입이 면허 취득률 향상에 기여했는지 추적할 수 없는 구조입니다.'],
+      ['부서 이기주의와 책임 귀속 오류','중도탈락률이 교무처 지표로만 잡혀 있어, 통학·시설(총무처), 장학(학생취업처), 상담(학생상담센터)의 영향이 분절되고 악화 시 교무처에만 책임을 묻게 됩니다.']]),
+    el('p',{class:'small',style:'margin:10px 0 0',text:'결론: 부서 직제식 나열 체계를 통제 가능성 기준으로 묶어 부서 책임경영(MBO)을 명확히 하고, 최종 결과는 IR 센터가 통계적으로 연계 분석하는 성과 귀속형 트리 체계로 전환합니다.'}));
+  const p2=el('div',{class:'panel'},el('h2',{text:'MBO 중심 하이브리드 모델'}),el('p',{class:'cap',text:'교원 102명, 정규직 직원 50여 명, 계약직 30여 명 규모에서는 순수 BSC는 행정 비용이 너무 크고, 순수 MBO는 종합 분석이 약합니다. 그래서 두 층으로 나눕니다.'}),
+    el('div',{class:'layers'},
+      el('div',{class:'layer'},el('b',{text:'현장 실무 층 (MBO)'}),el('p',{text:'행정 부서별 직제와 정보공시 분류에 따라 통제 가능한 지표를 1:1로 할당합니다. 데이터 수집이 간단해지고 부서 책임이 분명해집니다.'})),
+      el('div',{class:'arrow',text:'LMS·전산 데이터 자동 연계 ↓'}),
+      el('div',{class:'layer'},el('b',{text:'경영진 의사결정 층 (BSC)'}),el('p',{text:'IR 센터가 분리된 MBO 지표를 통계적으로 결합해 4대 관점으로 재해석하고, 총장 보고용 화면에는 인과관계(인프라 투자 → 학생 역량 → 충원율)로 보여 줍니다.'}))),
+    tbl(['구분','기존 방식: 원인 분해형','신규 방식: 성과 귀속형'],[
+      ['개념','BSC 관점. 하나의 결과를 해결하려고 관련 부서 사업을 모두 하위로 정렬','MBO와 데이터 분류 체계 중심. 각 부서가 통제 가능한 지표를 상위 성과로 누적'],
+      ['장점','모든 자원을 한 목표로 정렬, 사업 추진 당위성 명확','정보공시·업무 분장과 일치, 데이터 수집 명확, 부서 노력이 상위 KPI를 견인'],
+      ['한계','복합 변수 작용, 성과 귀속과 책임 소재 모호','개별 지표 분절화 우려, 종합 분석용 시스템 연계 필요'],
+      ['예시','상담·비교과·학사·시설 → 학생 만족도 → 중도탈락률 감소','중도탈락률·복학률 → 학생 충원·유지 성과 → 재학생 안정화 성과']]));
+  const links=[['S1-1-3','총괄','교무처(학적팀)','중도탈락률 산출, 학기별 현황 모니터링, 공시 관리'],
+    ['S2-1-1','협조','학생취업처','장학금 지급 비율: 경제적 이유의 이탈 방지'],['S2-2-2','협조','학생상담센터','상담 이용·만족: 심리적 이유의 이탈 방지'],
+    ['S2-2-1','협조','총무처·사무엘생활관','기숙사·시설 만족: 통학과 정주 여건 개선'],['S1-2-3','협조','교수학습지원센터','학업부진자 관리: 학업 어려움으로 인한 자퇴 방지']];
+  const p3=el('div',{class:'panel'},el('h2',{text:'총괄 부서와 협조 부서: 중도탈락률 예시'}),el('p',{class:'cap',text:`대학 전체가 영향을 주는 종합 지표는 [총괄 부서 1개 + 협조 부서 N개]로 정의서에 명시합니다. 수치는 ${y}년 기준입니다.`}),
+    el('div',{class:'tw'},el('table',{class:'t sys'},el('thead',null,el('tr',null,...['지표','역할','부서','책임',y+'년 값'].map(h=>el('th',{text:h})))),
+      el('tbody',null,...links.map(([c,r,d,t])=>el('tr',null,el('td',null,indBtn(c)),el('td',null,el('span',{class:'tag '+(r==='총괄'?'pub':''),text:r})),el('td',{text:d}),el('td',{text:t}),el('td',{text:val(c)})))))));
+  const tg=el('input',{type:'number',step:'0.1',value:'4.0',id:'pen-t','aria-label':'목표'}), ac=el('input',{type:'number',step:'0.1',value:'4.5',id:'pen-a','aria-label':'실적'}),
+    bp=el('input',{type:'number',step:'0.1',value:'1.0',id:'pen-b','aria-label':'총괄 감점'}), jp=el('input',{type:'number',step:'0.1',value:'0.5',id:'pen-j','aria-label':'협조 감점'}), res=el('div',{class:'penres',id:'pen-res'});
+  const calc=()=>{ const t=+tg.value, a=+ac.value, b=+bp.value, j=+jp.value; if(![t,a,b,j].every(isFinite)){ res.textContent='숫자를 모두 넣어 주세요.'; return; }
+    if(a<=t){ res.replaceChildren(el('b',{text:'목표 달성: 감점 없음'}),` 실적 ${a}%가 목표 ${t}% 이하입니다.`); return; }
+    const rows=links.map(([c,r,d])=>{ const i=IND[c], rt=r==='총괄'?null:rate(i,y); const miss=r==='총괄'||rt===null||rt<100; return [d,r,r==='총괄'?`-${b}점`:(rt===null?`-${j}점 (연동 지표 자료 없음, 확인 필요)`:(miss?`-${j}점 (연동 지표 달성률 ${Math.round(rt)}%)`:`감점 없음 (연동 지표 달성률 ${Math.round(rt)}%)`))]; });
+    res.replaceChildren(el('b',{text:`목표 미달성: 실적 ${a}% > 목표 ${t}%`}),tbl(['부서','역할','감점'],rows)); };
+  [tg,ac,bp,jp].forEach(x=>x.addEventListener('input',calc));
+  const p4=el('div',{class:'panel'},el('h2',{text:'부서 연대 감점제 계산'}),el('p',{class:'cap',text:'문서의 제안 모델입니다. 종합 지표가 목표에 못 미치면 총괄 부서는 기본 감점, 연동 지표를 달성하지 못한 협조 부서는 연대 감점을 받습니다. 기본값(목표 4.0%, 실적 4.5%, -1.0점, -0.5점)은 문서의 예시이며, 연동 지표 달성 여부는 대시보드 값으로 판정합니다.'}),
+    el('div',{class:'tools pen'},el('label',null,'중도탈락률 목표(%) ',tg),el('label',null,'실적(%) ',ac),el('label',null,'총괄 감점 ',bp),el('label',null,'협조 감점 ',jp)),res);
+  const chain=[['인프라 투자',['G1-1-2','M1-1-1']],['학생 역량',['E3-2-1','S3-2-1']],['충원·유지',['S1-1-1','S1-1-3']]];
+  const p5=el('div',{class:'panel'},el('h2',{text:'총장 보고용 인과 흐름'}),el('p',{class:'cap',text:`문서가 제시한 흐름(인프라 투자 → 학생 역량 → 충원율)에 대시보드 지표를 연결한 검토용 예시입니다. 지표 선택은 AI가 제안한 것이며 IR 분석으로 실제 연관을 확인해야 합니다. 수치는 ${y}년 기준입니다.`}),
+    el('div',{class:'chain'},...chain.flatMap(([t,cs],k)=>[el('div',{class:'node'},el('b',{text:t}),...cs.map(c=>el('div',{class:'nv'},indBtn(c),el('span',{text:val(c)})))),k<chain.length-1?el('div',{class:'arrow',text:'→'}):null].filter(Boolean))));
+  const p6=el('div',{class:'panel'},el('h2',{text:'추진 단계'}),tbl(['단계','활동','세부 내용','비고'],[
+    ['1단계 환경 분석','현황 진단과 KPI 매칭','현행 지표 진단, 부서 의견 수렴, 성과관리체계 설계',''],
+    ['2단계 체계 설계','트리 구조와 산식 확정','SMILEG 3단계 트리 고도화, 통제 가능성 검증과 산식 개발, 적절성 점검, 지표정의서 도출','FGI'],
+    ['3단계 사업 매칭','사업 프로그램 매칭 점검','대외 재정지원사업 성과지표와 운영 프로그램 맵핑',''],
+    ['4단계 연계 설계','IR 분석과 대시보드 기획','대시보드 프로토타입 설계, 지표 간 교차 분석 알고리즘 설계','후속 연구'],
+    ['5단계 종합 보고','파일럿과 최종안','특정 학과·부서 파일럿 적용, 최종 보고서와 규정 반영 제언','']]),
+    el('p',{class:'small',style:'margin:10px 0 0',text:'문서에는 "2단계까지 추진"으로 적혀 있습니다. 이 대시보드는 4단계의 대시보드 프로토타입에 해당합니다.'}));
+  box.replaceChildren(p1,p2,p3,p4,p5,p6); calc(); }
+
 function renderCompare(){ $('v-compare').replaceChildren(yearBars(),yoyTable()); }
 function radar(title,cap,series,id,MX,rings){ MX=MX||100; rings=rings||[25,50,75,100]; const W=380,H=330,cx=W/2,cy=168,R=112,n=D.areas.length; const pt=(k,v)=>{const a=-Math.PI/2+k*2*Math.PI/n; return [cx+Math.cos(a)*R*v/MX,cy+Math.sin(a)*R*v/MX];};
   const svg=sv('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':title});
@@ -452,6 +509,11 @@ function renderAnalysis(){ const y=st.year; const by=a=>D.ind.filter(i=>i.c[0]==
   const cards=(st.area==='ALL'?D.areas.map(x=>x[0]):[st.area]).map(insight);
   $('v-analysis').replaceChildren(el('div',{class:'grid2'},r1,r2),el('div',{class:'grid2'},...cards)); }
 
+const FXW={'S2-2-3':'정의서 원문의 산출식 이름이 "학생상담 활성화 지수"로 적혀 있어 지표명(대학생활 종합 만족도)과 맞지 않습니다. 정의서 확인이 필요합니다.',
+  'S2-1-2':'금액(원) 지표인데 정의서 원문 산출식에 "× 100"이 붙어 있습니다. 1인당 금액이라면 × 100을 빼야 합니다.',
+  'I2-2-2':'금액(원) 지표인데 정의서 원문 산출식에 "× 100"이 붙어 있습니다. 1인당 금액이라면 × 100을 빼야 합니다.',
+  'M1-3-1':'정의서 원문 산출식에 "× 100"이 붙어 있습니다. 1인당 편수라면 × 100을 빼야 합니다.',
+  'S2-2-1':'주 관리부서가 점검표(학생취업처), 구축 방안 예시(사무엘생활관·총무처)에서 서로 다르게 적혀 있습니다.'};
 const IND=Object.fromEntries(D.ind.map(i=>[i.c,i]));
 const trend=c=>{const p=IND[c].p; const ys=Object.keys(p.v).sort(); return `${p.label}: `+ys.map(y=>`${fmt(p.v[y],p.unit)}`).join(' → ')+` ${p.unit} (${ys[0]}~${ys[ys.length-1]}년 공시)`;};
 const cnt=f=>D.ind.filter(f).length;
@@ -585,24 +647,37 @@ function inputTable(items,onchg){ const rows=[]; let sub='';
   return el('div',{class:'tw'},el('table',{class:'t in'},el('thead',null,
       el('tr',null,el('th',{rowspan:'2',text:`지표 (${items.length}개)`}),el('th',{rowspan:'2',text:'단위'}),...YEARS.map(y=>el('th',{colspan:'2',style:'text-align:center',text:y+'년'}))),
       el('tr',null,...YEARS.flatMap(()=>[el('th',{text:'실적'}),el('th',{text:'목표'})]))),el('tbody',null,...rows))); }
+/* ---------- 구글 스프레드시트 연동 (Apps Script) ---------- */
+const sheetUrl=()=>{ let u=''; try{ u=localStorage.getItem('ghu-kpi-sheet-url')||''; }catch(e){} return (u||window.KPI_SHEET_URL||'').trim(); };
+async function sheetPost(payload){ const u=sheetUrl(); if(!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u)) throw new Error('nourl');
+  try{ const r=await fetch(u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),redirect:'follow'}); const j=await r.json(); if(!j.ok) throw new Error(j.error||'등록 실패'); return j; }
+  catch(e){ if(e.message==='nourl'||!/fetch|network|json|Unexpected/i.test(e.message)) throw e;
+    await fetch(u,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}); return {ok:true,n:payload.items.length,unconfirmed:true}; } }
+async function sheetList(key){ const u=sheetUrl(); if(!u) throw new Error('연동 주소가 없습니다.'); const r=await fetch(u+'?action=list&key='+encodeURIComponent(key),{redirect:'follow'}); const j=await r.json(); if(!j.ok) throw new Error(j.error||'불러오지 못했습니다.'); return j.rows; }
+function mineItems(base){ const out=[]; base.forEach(i=>YEARS.forEach(y=>{ const e=(st.user[i.c]||{})[y]||{}; ['a','t'].forEach(k=>{ if(typeof e[k]==='number'&&isFinite(e[k])) out.push({c:i.c,n:i.n,y,k,v:e[k],u:unitOf(i)}); }); })); return out; }
+
 function renderInput(){ const box=$('v-input'); const base=scope().filter(i=>!st.inDept||i.cd===st.inDept); const items=base.filter(i=>!st.onlyEmpty||isOpen(i));
   const say=(t,ok)=>{const m=$('msg-in'); m.className='msg'+(ok?' ok':''); m.textContent=t;};
   const cntMine=()=>{ let n=0; base.forEach(i=>YEARS.forEach(y=>{const e=(st.user[i.c]||{})[y]||{}; n+=Object.keys(e).length;})); return n; };
   const dn=st.inDept||'전체 부서';
   const head=el('div',{class:'panel',id:'input-head'},el('h2',{text:'데이터 입력'}),
-    el('ol',{class:'steps'},el('li',{text:'부서 선택'}),el('li',{text:'실적과 목표 입력'}),el('li',{text:'제출하기 누르기'}),el('li',{text:'저장된 파일을 담당자에게 보내기'})),
-    el('p',{class:'cap',text:'담당 부서를 고른 뒤 아래 표에 숫자를 넣고, 맨 아래 "제출하기"를 누르면 제출 파일이 만들어집니다. 그 파일을 성과관리 담당자에게 보내면 끝입니다. 이 화면에 입력한 값은 내 컴퓨터에만 저장되고 자동으로 전송되지 않습니다.'}),
+    el('ol',{class:'steps'},el('li',{text:'부서 선택'}),el('li',{text:'실적과 목표 입력'}),el('li',{text:'등록 누르기'})),
+    el('p',{class:'cap',text:'담당 부서를 고른 뒤 아래 표에 숫자를 넣고 맨 아래 "등록"을 누르면, 입력한 값이 성과관리 구글 스프레드시트에 바로 저장됩니다. 파일을 따로 보낼 필요가 없습니다. 고칠 값이 생기면 고친 뒤 다시 등록하면 새 줄로 저장되고, 관리자 화면에서 가장 최근 값이 쓰입니다.'}),
+    sheetUrl()?null:el('p',{class:'alert',text:'● 스프레드시트 연동 주소가 아직 설정되지 않아 지금은 등록할 수 없습니다. 관리자가 config.js에 Apps Script 웹 앱 주소를 넣으면 등록 버튼이 동작합니다.'}),
     el('div',{class:'tools',role:'group','aria-label':'부서 선택'},el('button',{class:'chip','aria-pressed':String(!st.inDept),text:'전체 부서',onclick:()=>{st.inDept='';st.done=null;renderInput();}}),
       ...DEPTS.filter(d=>scope().some(i=>i.cd===d)).map(d=>{ const its=scope().filter(i=>i.cd===d&&isOpen(i)); return el('button',{class:'chip','aria-pressed':String(st.inDept===d),title:`입력이 필요한 지표 ${its.length}개 중 ${its.filter(filledM).length}개 입력`,text:`${d} ${its.filter(filledM).length}/${its.length}`,onclick:()=>{st.inDept=d;st.done=null;renderInput();}}); })),
     el('div',{class:'tools',style:'margin-top:10px'},el('button',{class:'chip','aria-pressed':String(st.onlyEmpty),text:'공시값 없는 지표만 보기',onclick:()=>{st.onlyEmpty=!st.onlyEmpty;renderInput();}}),
       el('button',{class:'btn',text:'엑셀로 작성할 양식 받기',title:'화면 대신 엑셀에서 작성하려면 이 양식을 채워 담당자에게 보내세요.',onclick:()=>{ const its=base.filter(isOpen); if(!its.length){ say('내려받을 지표가 없습니다.'); return; } saveFile(`성과지표_입력양식_${dn.replace(/\s+/g,'')}.csv`,makeCsv(its)); say('양식을 저장했습니다. 엑셀에서 실적과 목표 칸만 채우고 CSV로 저장해 담당자에게 보내면 됩니다.',true); }})));
   const who=el('input',{type:'text',id:'who',placeholder:'예: 홍길동',autocomplete:'name'});
   const submit=el('div',{class:'submit'},el('label',{for:'who'},'작성자',who),
-    el('button',{class:'btn pri big',id:'btn-submit',text:`${dn} 제출하기`,onclick:()=>{ const n=cntMine(); if(!st.inDept){ say('먼저 위에서 담당 부서를 선택하세요.'); return; } if(!n){ say('입력한 값이 없습니다. 표에 숫자를 넣은 뒤 제출하세요.'); return; }
-        const t=stamp(), name=`KPI제출_${dn.replace(/\s+/g,'')}_${t.day}.csv`; saveFile(name,makeCsv(base,{dept:dn,who:who.value.trim(),at:t.iso})); st.done={dept:dn,name,n}; renderInput(); $('done-box').scrollIntoView({block:'center'}); }}),
+    el('button',{class:'btn pri big',id:'btn-submit',text:`${dn} 등록`,onclick:async e=>{ const items=mineItems(base); if(!st.inDept){ say('먼저 위에서 담당 부서를 선택하세요.'); return; } if(!items.length){ say('입력한 값이 없습니다. 표에 숫자를 넣은 뒤 등록하세요.'); return; }
+        if(!sheetUrl()){ say('스프레드시트 연동 주소가 설정되지 않아 등록할 수 없습니다. 성과관리 담당자에게 알려 주세요.'); return; }
+        const b=e.currentTarget; b.disabled=true; b.textContent='등록 중…';
+        try{ const r=await sheetPost({kind:'kpi-submit',dept:dn,who:who.value.trim(),at:stamp().iso,items}); st.done={dept:dn,n:r.n,id:r.id,unconfirmed:!!r.unconfirmed,at:new Date().toLocaleString('ko-KR')}; renderInput(); $('done-box').scrollIntoView({block:'center'}); }
+        catch(x){ b.disabled=false; b.textContent=`${dn} 등록`; say(x.message==='nourl'?'연동 주소 형식이 맞지 않습니다. config.js의 주소를 확인해 주세요.':'등록하지 못했습니다: '+x.message+' 인터넷 연결을 확인한 뒤 다시 눌러 주세요.'); } }}),
     el('span',{class:'small',id:'cnt-mine',text:`${dn}: 입력한 값 ${cntMine()}개`}));
-  const done=st.done&&st.done.dept===dn?el('div',{class:'donebox',id:'done-box'},el('b',{text:'제출 파일이 저장되었습니다'}),`${st.done.name} (값 ${st.done.n}개). 이 파일을 성과관리 담당자에게 메일이나 메신저로 보내면 제출이 끝납니다. 수정할 내용이 생기면 고친 뒤 다시 제출하기를 눌러 새 파일을 보내세요. `,
-    el('a',{href:'mailto:?subject='+encodeURIComponent(`[성과지표 제출] ${dn}`)+'&body='+encodeURIComponent(`${dn} 성과지표 실적을 제출합니다.\n첨부: ${st.done.name}`),text:'메일 작성 열기'}),' (파일은 직접 첨부해야 합니다)'):null;
+  const done=st.done&&st.done.dept===dn?el('div',{class:'donebox',id:'done-box'},el('b',{text:st.done.unconfirmed?'전송했습니다':'스프레드시트에 등록되었습니다'}),
+    st.done.unconfirmed?`값 ${st.done.n}개를 전송했습니다(${st.done.at}). 브라우저 보안 설정 때문에 저장 확인 응답은 받지 못했습니다. 관리자 화면이나 시트에서 들어왔는지 확인할 수 있습니다.`:`값 ${st.done.n}개가 저장되었습니다(${st.done.at}, 등록 번호 ${st.done.id}). 수정할 값이 생기면 고친 뒤 다시 등록하세요.`):null;
   const tbl=el('div',{class:'panel'},items.length?inputTable(items,()=>{ $('cnt-mine').textContent=`${dn}: 입력한 값 ${cntMine()}개`; }):el('p',{class:'cap',text:'표시할 지표가 없습니다.'}),
     el('p',{class:'small',style:'margin:10px 0 0',text:'회색 글씨는 대학알리미 공시값(실적 칸)과 전년도 공시값(목표 칸)입니다. 자료가 없는 칸은 비워 두세요.'}),submit,el('p',{class:'msg',id:'msg-in',style:'margin-top:10px'}),done);
   box.replaceChildren(head,tbl); }
@@ -616,7 +691,7 @@ function renderAdmin(){ const box=$('v-admin'); if(!st.secure){ box.replaceChild
   const subList=st.subs.length?el('div',{class:'tw'},el('table',{class:'t'},el('thead',null,el('tr',null,el('th',{text:'제출처'}),el('th',{text:'파일'}),el('th',{text:'제출 시각'}),el('th',{text:'값'}),el('th',{text:''}))),
     el('tbody',null,...st.subs.slice().sort((a,b)=>b.at-a.at).map(sb=>el('tr',null,el('td',{text:sb.label}),el('td',{text:sb.file,style:'font-weight:400'}),el('td',{text:new Date(sb.at).toLocaleString('ko-KR'),style:'font-weight:400'}),el('td',{text:String(countUser(sb.vals))}),
       el('td',null,el('button',{class:'linkbtn',text:'삭제','aria-label':sb.label+' 제출 삭제',onclick:()=>{st.subs=st.subs.filter(x=>x.id!==sb.id);save();render();}}))))))):el('p',{class:'cap',text:'아직 받은 제출 파일이 없습니다.'});
-  const p1=el('div',{class:'panel',id:'admin-subs'},el('h2',{text:'제출 받기'}),el('p',{class:'cap',text:'부서가 보낸 제출 파일(CSV)을 올리면 값이 모입니다. 같은 지표에 서로 다른 값이 들어오면 아래 "값 조정"에 빨간색으로 표시됩니다. 여기 모인 자료는 이 브라우저에만 저장됩니다.'}),
+  const p1=el('div',{class:'panel',id:'admin-subs'},el('h2',{text:'제출 받기'}),el('p',{class:'cap',text:'스프레드시트에서 불러온 등록 건과, 엑셀 양식으로 받은 제출 파일(CSV)이 여기에 모입니다. 같은 지표에 서로 다른 값이 들어오면 아래 "값 조정"에 빨간색으로 표시됩니다. 여기 모인 자료는 이 브라우저에만 저장됩니다.'}),
     el('div',{class:'tools'},el('button',{class:'btn pri',text:'제출 파일 올리기',onclick:()=>csvIn.click()}),csvIn),el('p',{class:'msg',id:'msg-ad',style:'margin-top:10px'}),subList);
   const lab={a:'실적',t:'목표'};
   const card=e=>{ const i=IND[e.c], u=unitOf(i); const custom=el('input',{type:'number',step:'any','aria-label':'직접 입력할 값',placeholder:'직접 입력'});
@@ -631,7 +706,7 @@ function renderAdmin(){ const box=$('v-admin'); if(!st.secure){ box.replaceChild
     open.length?el('p',{class:'alert',text:`● 서로 다른 값이 제출된 항목이 ${open.length}건 있습니다. 맞는 값을 누르거나 직접 입력해 확정하세요. 확정 전에는 가장 최근 제출값이 임시로 쓰이고, 지표 목록에도 빨간 표시가 붙습니다.`}):el('p',{class:'cap',text:cf.length?'모든 항목이 조정되었습니다.':'서로 다른 값이 제출된 항목이 없습니다. 값이 같게 제출된 항목은 그대로 반영됩니다.'}),
     el('div',{style:'display:flex;flex-direction:column;gap:8px;margin-top:10px'},...open.map(card),...cf.filter(e=>e.state==='resolved').map(card)));
   const dn=st.inDept||'전체 부서', need=scope().filter(i=>(!st.inDept||i.cd===st.inDept)&&isOpen(i));
-  const req=`[성과지표 실적 제출 요청]\n${dn} 담당 지표 ${need.length}개의 ${YEARS[0]}~${YEARS[YEARS.length-1]}년 실적과 목표 제출을 부탁드립니다.\n· 대시보드의 "데이터 입력"에서 부서를 고르고 숫자를 넣은 뒤 "제출하기"를 누르면 제출 파일이 저장됩니다.\n· 저장된 파일을 회신해 주세요. 엑셀로 작성하려면 첨부 양식을 채워 CSV로 저장해 보내셔도 됩니다.\n· 자료가 없는 칸은 비워 두시면 됩니다.\n· 주소: ${location.origin+location.pathname}`;
+  const req=`[성과지표 실적 제출 요청]\n${dn} 담당 지표 ${need.length}개의 ${YEARS[0]}~${YEARS[YEARS.length-1]}년 실적과 목표 제출을 부탁드립니다.\n· 대시보드의 "데이터 입력"에서 부서를 고르고 숫자를 넣은 뒤 "등록"을 누르면 성과관리 스프레드시트에 바로 저장됩니다. 따로 회신하실 필요는 없습니다.\n· 자료가 없는 칸은 비워 두시면 됩니다.\n· 주소: ${location.origin+location.pathname}`;
   const p3=el('div',{class:'panel',id:'admin-req'},el('h2',{text:'부서별 진행과 요청'}),el('p',{class:'cap',text:'부서 이름 옆 숫자는 입력이 필요한 지표 중 실적이 들어온 개수입니다. 부서를 고르면 그 부서용 양식과 요청 문구가 만들어집니다.'}),
     el('div',{class:'tools'},el('button',{class:'chip','aria-pressed':String(!st.inDept),text:'전체 부서',onclick:()=>{st.inDept='';render();}}),
       ...DEPTS.map(d=>{ const its=D.ind.filter(i=>i.cd===d&&isOpen(i)); return el('button',{class:'chip','aria-pressed':String(st.inDept===d),text:`${d} ${its.filter(filledE).length}/${its.length}`,onclick:()=>{st.inDept=d;render();}}); })),
@@ -643,8 +718,20 @@ function renderAdmin(){ const box=$('v-admin'); if(!st.secure){ box.replaceChild
     el('div',{class:'tools'},el('button',{class:'btn pri',text:'암호화 파일 만들기',onclick:()=>{ $('msg-enc').textContent=''; $('dlg-enc').showModal(); }}),
       el('button',{class:'btn',text:'전체 값 백업',onclick:()=>{ if(!tot){ say('백업할 값이 없습니다.'); return; } saveFile('ghu-kpi-input.json',JSON.stringify(effAll(),null,1)); say('ghu-kpi-input.json으로 저장했습니다. 암호화되지 않은 파일이니 저장소에 올리지 마세요.',true); }}),
       el('button',{class:'btn',text:'백업 불러오기',onclick:()=>jsonIn.click()}),jsonIn));
-  box.replaceChildren(p1,p2,p3,p4); }
-function render(){ renderLock(); renderYears(); renderAreas(); renderTiles(); renderViews(); renderFilters(); renderList(); renderCompare(); renderAnalysis(); renderSolution(); renderInput(); renderAdmin(); }
+  const urlIn=el('input',{type:'url',id:'sheet-url',placeholder:'https://script.google.com/macros/s/…/exec',value:(()=>{try{return localStorage.getItem('ghu-kpi-sheet-url')||'';}catch(e){return '';}})(),style:'min-width:340px'});
+  const keyIn=el('input',{type:'password',id:'sheet-key',placeholder:'관리자 키',autocomplete:'off',value:(()=>{try{return sessionStorage.getItem('ghu-kpi-sheet-key')||'';}catch(e){return '';}})()});
+  const p0=el('div',{class:'panel',id:'admin-sheet'},el('h2',{text:'스프레드시트에서 불러오기'}),
+    el('p',{class:'cap',text:`부서가 "등록"을 누른 값은 구글 스프레드시트에 쌓입니다. 관리자 키를 넣고 불러오면 등록 건별로 아래 "제출 받기"에 들어가고, 같은 지표에 다른 값이 있으면 "값 조정"에 표시됩니다. 현재 연동 주소: ${sheetUrl()||'없음'}`}),
+    el('div',{class:'tools'},el('label',{for:'sheet-key'},'관리자 키 ',keyIn),
+      el('button',{class:'btn pri',text:'시트에서 불러오기',onclick:async()=>{ try{ sessionStorage.setItem('ghu-kpi-sheet-key',keyIn.value); }catch(e){}
+        try{ const rows=await sheetList(keyIn.value); const g={}; rows.forEach(r=>{ if(!IND[r.c]||!/^20\d\d$/.test(r.y)||!isFinite(r.v)) return; const id='sheet|'+r.id; g[id]=g[id]||{id,label:[r.dept,r.who].filter(Boolean).join(' · ')+' (시트)',file:'등록 '+r.id,at:r.t||Date.now(),vals:{}}; const v=g[id].vals; v[r.c]=v[r.c]||{}; v[r.c][r.y]=v[r.c][r.y]||{}; v[r.c][r.y][r.k]=r.v; });
+          const ids=Object.keys(g); st.subs=st.subs.filter(x=>!x.id.startsWith('sheet|')).concat(ids.map(k=>g[k])); save(); render(); say(`스프레드시트에서 등록 ${ids.length}건(값 ${rows.length}개)을 불러왔습니다.`+(nConf()?` 서로 다른 값 ${nConf()}건을 아래에서 조정하세요.`:''),true); }
+        catch(x){ say('불러오지 못했습니다: '+x.message); } }})),
+    el('details',{style:'margin-top:10px'},el('summary',{text:'연동 주소를 이 브라우저에서만 바꾸기 (시험용)'}),
+      el('p',{class:'small',text:'모든 부서가 같은 주소를 쓰려면 저장소의 config.js에 주소를 넣어야 합니다. 여기 넣은 주소는 이 브라우저에만 적용됩니다.'}),
+      el('div',{class:'tools'},urlIn,el('button',{class:'btn',text:'저장',onclick:()=>{ try{ urlIn.value.trim()?localStorage.setItem('ghu-kpi-sheet-url',urlIn.value.trim()):localStorage.removeItem('ghu-kpi-sheet-url'); }catch(e){} render(); }}))));
+  box.replaceChildren(p0,p1,p2,p3,p4); }
+function render(){ renderLock(); renderYears(); renderAreas(); renderTiles(); renderViews(); renderFilters(); renderList(); renderCompare(); renderSystem(); renderAnalysis(); renderSolution(); renderInput(); renderAdmin(); }
 $('f-dept').addEventListener('change',e=>{st.dept=e.target.value;renderList();});
 $('f-pub').addEventListener('click',()=>{st.pub=!st.pub;render();});
 $('f-q').addEventListener('input',e=>{st.q=e.target.value;renderList();});
